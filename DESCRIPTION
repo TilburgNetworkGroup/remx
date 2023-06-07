@@ -1,0 +1,70 @@
+Type: Package
+Package: remx
+Title: Mixed-effect relational event models
+Version: 1.0
+Date: 2023-03-30
+Authors@R: c(
+     person(given = "Fabio",
+            family = "Generoso Vieira",
+            role =  c("aut", "cre"),
+            email = "f.v.generosovieira@tilburguniversity.edu"),
+     person(
+            given = "Rumana",
+            family = "Lakdawala",
+            role = "aut",
+            email = "r.j.lakdawala@tilburguniversity.edu"),
+     person(
+            given = "Marlyne",
+            family = "Meijerink-Bosman",
+            role = "aut",
+            email = "m.l.meijerink@tilburguniversity.edu"),
+     person(
+            given = "Giuseppe",
+            family = "Arena",
+            role = "aut",
+            email = "g.arena@tilburguniversity.edu"),
+     person(
+            given = "Diana",
+            family = "Karimova",
+            role = "aut",
+            email = "d.karimova@tilburguniversity.edu"),
+     person(
+            given = "Mahdi",
+            family = "Shafiee Kamalabad",
+            role = "aut",
+            email = "m.shafiee@tilburguniversity.edu"),
+     person(given = "Roger",
+            family = "Leenders",
+            role = "ctb",
+            email = "r.t.a.j.leenders@tilburguniversity.edu"),
+      person(given = "Joris",
+            family = "Mulder",
+            role = "ctb",
+            email = "j.mulder3@tilburguniversity.edu")) 
+Maintainer: Fabio Vieira <f.v.generosovieira@tilburguniversity.edu>
+Description: This package implements meta-analytic approximations for mixed-effect tie- and actor-oriented relational event models. Also, using a fully frequentist model will return and lme4 object and using fully Bayesian model will return an rstanarm object.
+License: MIT + file LICENSE
+Depends: 
+    R (>= 4.0.0)
+Imports:
+    Rcpp (>= 1.0.10),
+    remify (>= 2.0.0),
+    remstimate (>= 2.0.0),
+    remstats,
+    lme4,
+    rstanarm,
+    stats,
+    utils,
+    abind,
+    mvtnorm
+LinkingTo:
+    Rcpp, 
+    RcppArmadillo, 
+    RcppDist
+Remotes:
+    TilburgNetworkGroup/remify,
+    TilburgNetworkGroup/remstimate
+Encoding: UTF-8
+RoxygenNote: 7.2.3
+LazyData: true
+Suggests: testthat

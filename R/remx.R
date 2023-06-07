@@ -316,7 +316,7 @@ hrem <- function(edgelist,
   t1 <- Sys.time()
   for(i in 1:length(edgelist)){
 
-    edgelistREH <- remify::reh(edgelist[[i]], model = "tie", actors = actors[[i]],
+    edgelistREH <- remify::remify(edgelist[[i]], model = "tie", actors = actors[[i]],
                                directed = directed, ordinal = ordinal)
 
     rem <- remstimate::remstimate(reh = edgelistREH,
@@ -522,7 +522,7 @@ hremActor <- function(edgelist,
   estimates <- vector("list")
   t1 <- Sys.time()
   for(i in 1:length(edgelist)){
-    edgelistREH <- remify::reh(edgelist[[i]], model = "actor", actors = actors[[i]],
+    edgelistREH <- remify::remify(edgelist[[i]], model = "actor", actors = actors[[i]],
                                directed = directed, ordinal = ordinal)
 
     rem <- remstimate::remstimate(reh = edgelistREH,

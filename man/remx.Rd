@@ -161,7 +161,8 @@ for(i in 1:length(edgelist)){names(edgelist[[i]]) <- c("time", "actor1", "actor2
 
 #Computing statistics
 effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
-stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, edgelist[[x]]))
+reh_obj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie"))
+stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, reh_obj[[x]]))
 
 #Running the model
 
@@ -181,7 +182,8 @@ print(fit)
 #Computing statistics
 sender_effects <- ~ indegreeSender(scaling = "std") + outdegreeSender(scaling = "std")
 receiver_effects <- ~ indegreeReceiver(scaling = "std") + rrankSend()
-stats <- lapply(1:length(edgelist), function(x) remstats::aomstats(edgelist[[x]], sender_effects, receiver_effects))
+reh_obj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "actor"))
+stats <- lapply(1:length(edgelist), function(x) remstats::aomstats(reh_obj[[x]], sender_effects, receiver_effects))
 
 #Running the model
 fit <- remx(edgelist = edgelist,

@@ -7,37 +7,21 @@
 hremActor(
   edgelist,
   statistics,
-  random_sender = NULL,
-  fixed_sender = NULL,
-  random_receiver = NULL,
-  fixed_receiver = NULL,
-  actors = NULL,
-  ordinal = FALSE,
-  directed = TRUE,
   Niter = 10000,
   Nchain = 2,
   NburnIn = 5000,
-  Nthin = 10
+  Nthin = 10,
+  random_sender = NULL,
+  random_receiver = NULL,
+  actors = NULL,
+  ordinal = FALSE,
+  directed = TRUE
 )
 }
 \arguments{
 \item{edgelist}{a list containing multiple relational event sequences}
 
 \item{statistics}{a list containing multiple \code{remstats} objects}
-
-\item{random_sender}{a vector containing the names of the covariates that will be treated as random effects in the sender model.}
-
-\item{fixed_sender}{a vector containing the names of the covariates that will be treated as fixed effects in sender model.}
-
-\item{random_receiver}{a vector containing the names of the covariates that will be treated as random effects in the receiver model.}
-
-\item{fixed_receiver}{a vector containing the names of the covariates that will be treated as fixed effects in the receiver model.}
-
-\item{actors}{a list containing the names of the actors in every network, should be the same lenght as \code{edgelist} and \code{statistics}.}
-
-\item{ordinal}{logical value indicating whether the timestamps of the events are know. The default is \code{ordinal = FALSE}. If \code{ordinal = TRUE}, that means that only the order of the events is known.}
-
-\item{directed}{logical value indicating whether the model is for directed network. The default is \code{directed = TRUE}.}
 
 \item{Niter}{number of iterations of the Gibbs sampler. The default is \code{Niter = 100000}.}
 
@@ -46,6 +30,16 @@ hremActor(
 \item{NburnIn}{number of samples to be discarded.The default is \code{NburnIn = 5000}.}
 
 \item{Nthin}{number of samples to discarded in between every sample kept.The default is \code{NburnIn = 10}.}
+
+\item{random_sender}{a vector containing the names of the covariates that will be treated as random effects in the sender model.}
+
+\item{random_receiver}{a vector containing the names of the covariates that will be treated as random effects in the receiver model.}
+
+\item{actors}{a list containing the names of the actors in every network, should be the same lenght as \code{edgelist} and \code{statistics}.}
+
+\item{ordinal}{logical value indicating whether the timestamps of the events are know. The default is \code{ordinal = FALSE}. If \code{ordinal = TRUE}, that means that only the order of the events is known.}
+
+\item{directed}{logical value indicating whether the model is for directed network. The default is \code{directed = TRUE}.}
 }
 \value{
 A list containing the output of the Gibbs sampler for this model.

@@ -4,7 +4,7 @@
 \alias{UpdateSigma}
 \title{UpdateSigma}
 \usage{
-UpdateSigma(eta, K, p, Lambda, beta, Mu)
+UpdateSigma(eta, K, p, Lambda, beta)
 }
 \arguments{
 \item{eta}{an integer representing a prior hyperparameter, this will allow Sigma to have a Half-t prior}
@@ -16,8 +16,6 @@ UpdateSigma(eta, K, p, Lambda, beta, Mu)
 \item{Lambda}{a vector with dimension p, this is an auxiliary variable that allows Sigma to have a Half-t prior}
 
 \item{beta}{is a matrix with dimensions p x K representing one MCMC sample of the random effects}
-
-\item{Mu}{is a vector with dimension p representing the mean of the random effects}
 }
 \value{
 a p x p matrix representing one MCMC sample of the covariance matrix of the random effects

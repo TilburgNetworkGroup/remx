@@ -12,37 +12,40 @@ samplerActor(
   v,
   u,
   K,
-  nu,
   beta,
   beta_hat,
   omega_hat,
+  omega_hat_11,
+  omega_hat_21,
+  omega_hat_22,
   MuB,
   Sigma,
   eta,
   LambdaB,
   xi,
-  TauMuB,
-  TauPsi,
   SigmaPsi,
-  omegaB,
   psi,
+  psi_hat,
   p,
   q,
   gamma,
   gamma_hat,
   zeta_hat,
+  zeta_hat_11,
+  zeta_hat_21,
+  zeta_hat_22,
   MuG,
   Zeta,
   LambdaG,
-  TauMuG,
-  TauPhi,
   SigmaPhi,
-  omegaG,
   phi,
+  phi_hat,
+  random_effect_rec,
+  fixed_effect_rec,
+  random_effect_snd,
+  fixed_effect_snd,
   randomModelSnd,
-  randomModelRec,
-  fixModelSnd,
-  fixModelRec
+  randomModelRec
 )
 }
 \arguments{
@@ -60,13 +63,17 @@ samplerActor(
 
 \item{K}{number of groups (or networks) in the multilevel analysis}
 
-\item{nu}{a vector with dimension K, representing the degrees of freedom of the student-t distribution, it is set to (number of events in every group) - p}
-
 \item{beta}{a 3-d array with dimension v x K x Nchain containing the starting values for the random effects parameters in the receiver model}
 
 \item{beta_hat}{a matrix with dimensions v X K containing the MLEs of the random effects in the receiver model estimated from the independent networks}
 
 \item{omega_hat}{a 3-d array with dimensions v x v x K containing the covariance matrices of the MLEs for the random effects in the receiver model estimated from the independent groups}
+
+\item{omega_hat_11}{covariance matrix decomposition of the fixed effects}
+
+\item{omega_hat_21}{covariance matrix decomposition of the covariance between fixed and random effects}
+
+\item{omega_hat_22}{covariance matrix decomposition of the random effects}
 
 \item{MuB}{a matrix with dimensions v x Nchain containing the initial values of the random-effect means in the receiver model}
 
@@ -78,15 +85,11 @@ samplerActor(
 
 \item{xi}{a scalar that can be an arbitrarily large number, see Gelman (2006)}
 
-\item{TauMuB}{is a matrix with dimensions v x v representing the covariance matrix of the prior of Mu in the receiver model}
-
-\item{TauPsi}{a vector of dimension u, which represents the prior variance of the fixed effects in the receiver model}
-
 \item{SigmaPsi}{a matrix with dimensions u x K representing the standard errors of the MLEs for the fixed effects in the receiver model}
 
-\item{omegaB}{a matrix with dimensions v x Nchain containing the initial values for the scale mixture parameters that allow the random-effects in the receiver model to have a student-t likelihood}
-
 \item{psi}{a matrix with dimensions u x K representing the MLEs for the fixed effects in the receiver model independently estimated from every group}
+
+\item{psi_hat}{a matrix with dimensions u x K representing the MLEs for the fixed effects in the receiver model independently estimated from every group}
 
 \item{p}{an integer representing the number of random effects in the sender model}
 
@@ -98,29 +101,35 @@ samplerActor(
 
 \item{zeta_hat}{a 3-d array with dimensions p x p x K containing the covariance matrices of the MLEs for the random effects in the sender model estimated from the independent groups}
 
+\item{zeta_hat_11}{covariance matrix decomposition of the fixed effects}
+
+\item{zeta_hat_21}{covariance matrix decomposition of the covariance between fixed and random effects}
+
+\item{zeta_hat_22}{covariance matrix decomposition of the random effects}
+
 \item{MuG}{a matrix with dimensions p x Nchain containing the initial values of the random-effect means in the sender model}
 
 \item{Zeta}{a 3-d array with dimensions p x p x Nchain containing the initial values for the covariance matrix of the random-effects in the sender model}
 
 \item{LambdaG}{a matrix with dimensions Nchain x p containing initial values for the Lambda parameter in the sender model}
 
-\item{TauMuG}{is a matrix with dimensions p x p representing the covariance matrix of the prior of Mu in the sender model}
-
-\item{TauPhi}{a vector of dimension q, which represents the prior variance of the fixed effects in the sender model}
-
 \item{SigmaPhi}{a matrix with dimensions q x K representing the standard errors of the MLEs for hte fixed effects in the sender model}
 
-\item{omegaG}{matrix with dimensions p x Nchain containing the initial values for the scale mixture parameters that allow the random-effects in the receiver model to have a student-t likelihood}
-
 \item{phi}{a matrix with dimensions q x K representing the MLEs for the fixed effects in the sender model independently estimated from every group}
+
+\item{phi_hat}{a matrix with dimensions q x K representing the MLEs for the fixed effects in the sender model independently estimated from every group}
+
+\item{random_effect_rec}{matrix with 0's and 1's}
+
+\item{fixed_effect_rec}{matrix with 0's and 1's}
+
+\item{random_effect_snd}{matrix with 0's and 1's}
+
+\item{fixed_effect_snd}{matrix with 0's and 1's}
 
 \item{randomModelSnd}{a boolean, if equals to TRUE it states that the sender model contain only random effects}
 
 \item{randomModelRec}{a boolean, if equals to TRUE it states that the receiver model contain only random effects}
-
-\item{fixModelSnd}{a boolean, if equals TRUE it states that the sender model contain only fixed effects}
-
-\item{fixModelRec}{a boolean, if equals TRUE it states that the receiver model contain only fixed effects}
 }
 \value{
 a list containing two other lists with the MCMC sample for all parameters in the sender and receiver models

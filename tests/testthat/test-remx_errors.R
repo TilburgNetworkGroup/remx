@@ -1,4 +1,5 @@
 library(remx)
+library(remify)
 library(remstats)
 library(testthat)
 
@@ -7,9 +8,10 @@ test_that("Testing whether the remx function throw expected errors.", {
   edgelist <- networks
   edgelist <- lapply(edgelist, function(x) x)
   for(i in 1:length(edgelist)){names(edgelist[[i]]) <- c("time", "actor1", "actor2")}
-
+  actors <- lapply(1:length(edgelist), function(x) as.character(1:10))
+  rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie", actors = actors[[x]]))
   effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
-  stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, edgelist[[x]]))
+  stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, rehObj[[x]]))
 
   #Passing whatever object as edgelist
   expect_error(
@@ -64,9 +66,10 @@ test_that("Testing whether the remx function throw expected errors.", {
   )
 
   #If model is tie and not all objects are tomstats
+  rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "actor", actors = actors[[x]]))
   sender_effects <- ~ indegreeSender(scaling = "std") + outdegreeSender(scaling = "std")
   receiver_effects <- ~ indegreeReceiver(scaling = "std") + rrankSend()
-  stats3 <- lapply(1:length(edgelist), function(x) remstats::aomstats(edgelist[[x]], sender_effects, receiver_effects))
+  stats3 <- lapply(1:length(edgelist), function(x) remstats::aomstats(rehObj[[x]], sender_effects, receiver_effects))
   stats2[[15]] <- stats3[[15]]
   expect_error(
     remx(edgelist = edgelist,

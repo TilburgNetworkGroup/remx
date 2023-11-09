@@ -4,7 +4,7 @@
 \alias{UpdateBeta}
 \title{UpdateBeta}
 \usage{
-UpdateBeta(p, K, beta_hat, omega_hat, Mu, Sigma, omega)
+UpdateBeta(p, K, beta_hat, omega_hat, Mu, Sigma)
 }
 \arguments{
 \item{p}{an integer that determines the dimension of the vector of parameters in each group}
@@ -15,11 +15,9 @@ UpdateBeta(p, K, beta_hat, omega_hat, Mu, Sigma, omega)
 
 \item{omega_hat}{a 3-d array with dimensions p x p x K representing the covariance matrix of the MLEs}
 
-\item{Mu}{a vector with dimension p representing the random-effect means}
+\item{Mu}{a vector p x 1 representing the mean of the random effects}
 
 \item{Sigma}{a matrix p x p representing the covariance matrix of the random effects}
-
-\item{omega}{a vector with dimension K representing the scale mixture variable that allows beta to have a student-t likelihood}
 }
 \value{
 a matrix with dimensions p x K representing one sample of the posterior distribution of the beta

@@ -7,7 +7,6 @@
 hrem(
   edgelist,
   statistics,
-  fixed = NULL,
   random = NULL,
   Niter = 10000,
   Nchain = 2,
@@ -22,8 +21,6 @@ hrem(
 \item{edgelist}{a list containing multiple relational event sequences}
 
 \item{statistics}{a list containing multiple \code{remstats} objects}
-
-\item{fixed}{a vector containing the names of the covariates that will be treated as fixed effects.}
 
 \item{random}{a vector containing the names of the covariates that will be treated as random effects.}
 

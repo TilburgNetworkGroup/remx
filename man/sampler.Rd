@@ -12,22 +12,23 @@ sampler(
   p,
   q,
   K,
-  nu,
-  beta,
+  delta,
   beta_hat,
   omega_hat,
+  omega_hat_11,
+  omega_hat_21,
+  omega_hat_22,
   Mu,
   Sigma,
   eta,
   Lambda,
   xi,
-  TauMu,
-  TauPsi,
-  SigmaPsi,
-  omega,
+  SigmaMean,
   psi,
-  randomModel,
-  fixedModel
+  psi_hat,
+  random_effect,
+  fixed_effect,
+  randomModel
 )
 }
 \arguments{
@@ -45,13 +46,17 @@ sampler(
 
 \item{K}{number of groups (or networks) in the multilevel analysis}
 
-\item{nu}{a vector with dimension K, representing the degrees of freedom of the student-t distribution, it is set to (number of events in every group) - p}
-
-\item{beta}{a 3-d array with dimension p x K x Nchain containing the starting values for the random effects parameters}
+\item{delta}{a 3-d array with dimension p x K x Nchain containing the starting values for the random effects parameters}
 
 \item{beta_hat}{a matrix with dimensions p X K containing the MLEs of the random effects estimated from the independent networks}
 
 \item{omega_hat}{a 3-d array with dimensions p x p x K containing the covariance matrices of the MLEs estimated from the independent groups}
+
+\item{omega_hat_11}{covariance matrix decomposition of the fixed effects}
+
+\item{omega_hat_21}{covariance matrix decomposition of the covariance between fixed and random effects}
+
+\item{omega_hat_22}{covariance matrix decomposition of the random effects}
 
 \item{Mu}{a matrix with dimensions Nchain x p containing the initial values for the random-effect means}
 
@@ -63,19 +68,17 @@ sampler(
 
 \item{xi}{a scalar that can be an arbitrarily large number, see Gelman (2006)}
 
-\item{TauMu}{is a matrix with dimensions p x p representing the covariance matrix of the prior of Mu}
-
-\item{TauPsi}{a vector of dimension q, which represents the prior variance of the fixed effects}
-
-\item{SigmaPsi}{a matrix with dimensions q x K representing the standard errors of the MLEs for the fixed effects}
-
-\item{omega}{a matrix with dimensions p x Nchain containing the initial values for the scale mixture parameters that allow the random-effects to have a student-t likelihood}
+\item{SigmaMean}{a matrix with dimensions q x K representing the standard errors of the MLEs for the fixed effects}
 
 \item{psi}{a matrix with dimensions q x K representing the MLEs for the fixed effects independently estimated from every group}
 
-\item{randomModel}{a boolean, if equals to TRUE it states that the model contain only random effects}
+\item{psi_hat}{a matrix with dimensions q x K representing the MLEs for the fixed effects independently estimated from every group}
 
-\item{fixedModel}{a boolean, if equals TRUE it states that the model contain only fixed effects}
+\item{random_effect}{a matrix with 1's and 0's}
+
+\item{fixed_effect}{a matrix with 1's and 0's}
+
+\item{randomModel}{a boolean, if equals to TRUE it states that the model contain only random effects}
 }
 \value{
 a list containing the MCMC samples for all parameters in the model

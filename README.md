@@ -15,6 +15,8 @@ devtools::install_github("TilburgNetworkGroup/remx")
 
 In this case, there are multiple independent networks that need to be analized using a multilevel model.
 
+The **remx** function is the main function of the package. It fits all multilevel models available.
+
 ### Tie-oriented Model
 
 ```r{}
@@ -100,6 +102,8 @@ VarCov_metarem(fit)
 # Relational-event network data streams
 
 In this case, we have a relational-event network that is augmented with additional events over time. Every new batch of events will be used to update the model estimates. 
+
+The **streamrem** function is the function that fits relational-event models on data streams.
 
 ## Computing network statistics
 

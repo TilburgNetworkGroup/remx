@@ -107,7 +107,6 @@ We need to use the arguments **start** and **stop** from **remstats** in order t
 
 ```r{}
 
-#Now let's simulate a network
 edgelist <- stream
 
 library(remstats)

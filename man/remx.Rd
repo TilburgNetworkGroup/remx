@@ -10,9 +10,7 @@ remx(
   random = NULL,
   fixed = NULL,
   random_sender = NULL,
-  fixed_sender = NULL,
   random_receiver = NULL,
-  fixed_receiver = NULL,
   intercept = TRUE,
   directed = TRUE,
   ordinal = FALSE,
@@ -31,17 +29,13 @@ remx(
 
 \item{statistics}{a list containing multiple \code{remstats} objects}
 
-\item{random}{a vector containing the names of the covariates that will be treated as random effects, use it for \code{model = "tie"}.}
+\item{random}{a vector containing the names of the covariates that will be treated as random effects, use it for \code{model = "tie"}. If \code{random = NULL} all covariates will be treated as fixed-effects.}
 
-\item{fixed}{a vector containing the names of the covariates that will be treated as fixed effects, use it for \code{model = "tie"}.}
+\item{fixed}{a character vector containing the names of the covariables that will be treated as fixed. Only use this when \code{method = "classic"} or \code{method = "bayes"}.}
 
-\item{random_sender}{a vector containing the names of the covariates that will be treated as random effects in the sender model, use it for \code{model = "actor"}.}
+\item{random_sender}{a vector containing the names of the covariates that will be treated as random effects in the sender model, use it for \code{model = "actor"}. If \code{random_sender = NULL} all covariates in the sender model will be treated as fixed-effects.}
 
-\item{fixed_sender}{a vector containing the names of the covariates that will be treated as fixed effects in sender model, use it for \code{model = "actor"}.}
-
-\item{random_receiver}{a vector containing the names of the covariates that will be treated as random effects in the receiver model, use it for \code{model = "actor"}.}
-
-\item{fixed_receiver}{a vector containing the names of the covariates that will be treated as fixed effects in the receiver model, use it for \code{model = "actor"}.}
+\item{random_receiver}{a vector containing the names of the covariates that will be treated as random effects in the receiver model, use it for \code{model = "actor"}. If \code{random_receiver = NULL} all covariates in the receiver model will be treated as fixed-effects.}
 
 \item{intercept}{logical value indicating whether an intercept will be included in the model. The default is \code{intercept = TRUE}.}
 
@@ -70,15 +64,13 @@ for \code{method = "meta"} returns a metarem S3 object
 
 For tie-oriented model:
 
-\code{beta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
+\code{delta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
 
-\code{mu} random-effect means, an array with dimensions corresponding to samples, effects and chains
+\code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
 
 \code{sigma} random-effect covariance matrix
 
 \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-
-\code{psi} fixed effects, an array with dimensions samples, effects and chains
 
 \code{omega} scale-mixture parameter that allows beta to have a student T likelihood
 
@@ -98,31 +90,27 @@ For tie-oriented model:
 
 For actor-oriented model:
 
-Inside the sender_rate list:
+Inside the sender_model list:
 
 \code{gamma} a list containing random effects in the sender model. Each array has dimensions samples, effects and networks
 
-\code{mu} random-effect means, the array has dimensions samples, effects and chains
+\code{mu} fixed- and random-effect means, the array has dimensions samples, effects and chains
 
 \code{sigma} random-effect covariance matrix
 
 \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-
-\code{phi} fixed effects, array dimensions are samples, effects, and chains
 
 \code{omega} scale-mixture parameter that allows beta to have a student T likelihood
 
-In the receiver_choice list:
+In the receiver_model list:
 
 \code{beta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
 
-\code{mu} random-effect means, an array with dimensions corresponding to samples, effects and chains
+\code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
 
 \code{sigma} random-effect covariance matrix
 
 \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-
-\code{psi} fixed effects, an array with dimensions samples, effects and chains
 
 \code{omega} scale-mixture parameter that allows beta to have a student T likelihood
 
@@ -156,22 +144,20 @@ library(remstats)
 
 #Loading the data
 edgelist <- networks
-edgelist <- lapply(edgelist, function(x) x[,])
 for(i in 1:length(edgelist)){names(edgelist[[i]]) <- c("time", "actor1", "actor2")}
 
 #Computing statistics
 effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
-reh_obj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie"))
-stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, reh_obj[[x]]))
+rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie"))
+stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, rehObj[[x]]))
 
 #Running the model
 
 fit <- remx(edgelist = edgelist,
-            statistics = stats,
-            random = c("baseline"),
-            fixed = c("inertia", "reciprocity"),
-            method = "meta",
-            model = "tie")
+           statistics = stats,
+           random = c("baseline", "inertia"),
+           method = "meta",
+           model = "tie")
 
 print(fit)
 
@@ -180,20 +166,20 @@ print(fit)
 #----------------------------#
 
 #Computing statistics
+rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "actor"))
 sender_effects <- ~ indegreeSender(scaling = "std") + outdegreeSender(scaling = "std")
 receiver_effects <- ~ indegreeReceiver(scaling = "std") + rrankSend()
-reh_obj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "actor"))
-stats <- lapply(1:length(edgelist), function(x) remstats::aomstats(reh_obj[[x]], sender_effects, receiver_effects))
+stats <- lapply(1:length(edgelist), function(x) remstats::aomstats(rehObj[[x]],
+sender_effects, receiver_effects))
 
 #Running the model
 fit <- remx(edgelist = edgelist,
             statistics = stats,
-            random_sender = c("baseline"),
-            fixed_sender = c("indegreeSender"),
+            random_sender = c("baseline", "outdegreeSender", "indegreeSender"),
             random_receiver = c("indegreeReceiver", "rrankSend"),
-            fixed_receiver = NULL,
             method = "meta",
             model = "actor")
 
 print(fit)
+
 }

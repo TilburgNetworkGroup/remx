@@ -9,3 +9,15 @@
 #' \item{receiver}{the index represending the receiver of the interaction}
 #' }
 "networks"
+
+#' @title stream
+#' 
+#' @description A network with 5000 events. See https://github.com/TilburgNetworkGroup/remulate. 
+#' 
+#' @format A data frame with 3 columns for time, sender and receiver
+#' \describe{
+#' \item{time}{the time at which each observation occurred}
+#' \item{sender}{the index representing the sender of the interaction}
+#' \item{receiver}{the index represending the receiver of the interaction}
+#' }
+"stream"

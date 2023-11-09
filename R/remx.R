@@ -4,12 +4,10 @@
 #'
 #' @param edgelist a list containing multiple relational event sequences
 #' @param statistics a list containing multiple \code{remstats} objects
-#' @param random a vector containing the names of the covariates that will be treated as random effects, use it for \code{model = "tie"}.
-#' @param fixed a vector containing the names of the covariates that will be treated as fixed effects, use it for \code{model = "tie"}.
-#' @param random_sender a vector containing the names of the covariates that will be treated as random effects in the sender model, use it for \code{model = "actor"}.
-#' @param fixed_sender a vector containing the names of the covariates that will be treated as fixed effects in sender model, use it for \code{model = "actor"}.
-#' @param random_receiver a vector containing the names of the covariates that will be treated as random effects in the receiver model, use it for \code{model = "actor"}.
-#' @param fixed_receiver a vector containing the names of the covariates that will be treated as fixed effects in the receiver model, use it for \code{model = "actor"}.
+#' @param random a vector containing the names of the covariates that will be treated as random effects, use it for \code{model = "tie"}. If \code{random = NULL} all covariates will be treated as fixed-effects.
+#' @param random_sender a vector containing the names of the covariates that will be treated as random effects in the sender model, use it for \code{model = "actor"}. If \code{random_sender = NULL} all covariates in the sender model will be treated as fixed-effects.
+#' @param random_receiver a vector containing the names of the covariates that will be treated as random effects in the receiver model, use it for \code{model = "actor"}. If \code{random_receiver = NULL} all covariates in the receiver model will be treated as fixed-effects.
+#' @param fixed a character vector containing the names of the covariables that will be treated as fixed. Only use this when \code{method = "classic"} or \code{method = "bayes"}.
 #' @param intercept logical value indicating whether an intercept will be included in the model. The default is \code{intercept = TRUE}.
 #' @param directed logical value indicating whether the model is for directed network. The default is \code{directed = TRUE}.
 #' @param ordinal logical value indicating whether the timestamps of the events are know. The default is \code{ordinal = FALSE}. If \code{ordinal = TRUE}, that means that only the order of the events is known.
@@ -24,11 +22,10 @@
 #'
 #' @return  for \code{method = "meta"} returns a metarem S3 object
 #' @return For tie-oriented model:
-#' @return \code{beta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
-#' @return \code{mu} random-effect means, an array with dimensions corresponding to samples, effects and chains
+#' @return \code{delta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
+#' @return \code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
 #' @return \code{sigma} random-effect covariance matrix
 #' @return \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-#' @return \code{psi} fixed effects, an array with dimensions samples, effects and chains
 #' @return \code{omega} scale-mixture parameter that allows beta to have a student T likelihood
 #' @return \code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
 #' @return \code{random} If \code{TRUE}, that means the model contain random effects
@@ -39,19 +36,17 @@
 #' @return \code{run_time} model run time
 #'
 #' @return For actor-oriented model:
-#' @return Inside the sender_rate list:
+#' @return Inside the sender_model list:
 #' @return \code{gamma} a list containing random effects in the sender model. Each array has dimensions samples, effects and networks
-#' @return \code{mu} random-effect means, the array has dimensions samples, effects and chains
+#' @return \code{mu} fixed- and random-effect means, the array has dimensions samples, effects and chains
 #' @return \code{sigma} random-effect covariance matrix
 #' @return \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-#' @return \code{phi} fixed effects, array dimensions are samples, effects, and chains
 #' @return \code{omega} scale-mixture parameter that allows beta to have a student T likelihood
-#' @return In the receiver_choice list:
+#' @return In the receiver_model list:
 #' @return \code{beta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
-#' @return \code{mu} random-effect means, an array with dimensions corresponding to samples, effects and chains
+#' @return \code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
 #' @return \code{sigma} random-effect covariance matrix
 #' @return \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-#' @return \code{psi} fixed effects, an array with dimensions samples, effects and chains
 #' @return \code{omega} scale-mixture parameter that allows beta to have a student T likelihood
 #' @return \code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
 #' @return \code{random_sender} If \code{TRUE}, that means the sender model contain random effects
@@ -73,22 +68,20 @@
 #'
 #' #Loading the data
 #' edgelist <- networks
-#' edgelist <- lapply(edgelist, function(x) x[,])
 #' for(i in 1:length(edgelist)){names(edgelist[[i]]) <- c("time", "actor1", "actor2")}
 #'
 #' #Computing statistics
 #' effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
-#' reh_obj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie"))
-#' stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, reh_obj[[x]]))
+#' rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie"))
+#' stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, rehObj[[x]]))
 #'
 #' #Running the model
 #'
-#' fit <- remx(edgelist = edgelist,
-#'             statistics = stats,
-#'             random = c("baseline"),
-#'             fixed = c("inertia", "reciprocity"),
-#'             method = "meta",
-#'             model = "tie")
+#'fit <- remx(edgelist = edgelist,
+#'            statistics = stats,
+#'            random = c("baseline", "inertia"),
+#'            method = "meta",
+#'            model = "tie")
 #'
 #' print(fit)
 #'
@@ -97,31 +90,29 @@
 #' #----------------------------#
 #'
 #' #Computing statistics
+#' rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "actor"))
 #' sender_effects <- ~ indegreeSender(scaling = "std") + outdegreeSender(scaling = "std")
 #' receiver_effects <- ~ indegreeReceiver(scaling = "std") + rrankSend()
-#' reh_obj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "actor"))
-#' stats <- lapply(1:length(edgelist), function(x) remstats::aomstats(reh_obj[[x]], sender_effects, receiver_effects))
+#' stats <- lapply(1:length(edgelist), function(x) remstats::aomstats(rehObj[[x]],
+#' sender_effects, receiver_effects))
 #'
 #' #Running the model
 #' fit <- remx(edgelist = edgelist,
 #'             statistics = stats,
-#'             random_sender = c("baseline"),
-#'             fixed_sender = c("indegreeSender"),
+#'             random_sender = c("baseline", "outdegreeSender", "indegreeSender"),
 #'             random_receiver = c("indegreeReceiver", "rrankSend"),
-#'             fixed_receiver = NULL,
 #'             method = "meta",
 #'             model = "actor")
 #'
 #' print(fit)
+#'
 #' @export
 remx <- function(edgelist,
                  statistics,
                  random = NULL,
                  fixed = NULL,
                  random_sender = NULL,
-                 fixed_sender = NULL,
                  random_receiver = NULL,
-                 fixed_receiver = NULL,
                  intercept = TRUE,
                  directed = TRUE,
                  ordinal = FALSE,
@@ -159,15 +150,9 @@ remx <- function(edgelist,
   if(model == "actor" & (method == "classic" | method == "bayes")){
     stop("For model = 'actor', only method = 'meta' is supported.")
   }
-  if(model == "tie"){
-    if(is.null(random) & is.null(fixed)){
-      stop("Both random and fixed parameters are NULL. At least one of them must contain the name of one or more covariables.")
-    }
-  }
-  if(model == "actor"){
-    if((is.null(random_sender) & is.null(fixed_sender)) | is.null(random_receiver) & is.null(fixed_receiver)){
-      stop("Either random_sender and fixed_sender or random_receiver and fixed_receiver are both NULL. At least one of each must contain the name of one or more covariables.")
-    }
+
+  if(!is.null(fixed) & (method == "meta")){
+    stop("The parameter fixed can only be declared for methods 'classic' and 'bayes'.")
   }
 
   #If the user enters either classic or bayes, they'll be prompted to answer
@@ -221,7 +206,6 @@ remx <- function(edgelist,
       fit <- hrem(edgelist = edgelist,
                   statistics = statistics,
                   random = random,
-                  fixed = fixed,
                   Niter = Niter,
                   Nchain = Nchain,
                   NburnIn = NburnIn,
@@ -240,8 +224,6 @@ remx <- function(edgelist,
                        statistics = statistics,
                        random_sender = random_sender,
                        random_receiver = random_receiver,
-                       fixed_sender = fixed_sender,
-                       fixed_receiver = fixed_receiver,
                        actors = actors,
                        directed = directed,
                        ordinal = ordinal,
@@ -278,7 +260,6 @@ remx <- function(edgelist,
 #'
 #' @param edgelist a list containing multiple relational event sequences
 #' @param statistics a list containing multiple \code{remstats} objects
-#' @param fixed a vector containing the names of the covariates that will be treated as fixed effects.
 #' @param random a vector containing the names of the covariates that will be treated as random effects.
 #' @param Niter number of iterations of the Gibbs sampler. The default is \code{Niter = 100000}.
 #' @param Nchain number of chains of the Gibbs sampler.The default is \code{Nchain = 2}.
@@ -291,7 +272,6 @@ remx <- function(edgelist,
 #' @return  A list containing the output of the Gibbs sampler for this model.
 hrem <- function(edgelist,
                  statistics,
-                 fixed = NULL,
                  random = NULL,
                  Niter = 10000,
                  Nchain = 2,
@@ -307,13 +287,15 @@ hrem <- function(edgelist,
 
   #This look gets the estimates from the remstimate function and store them in a
   #list with the MLE's and their standard errors
-
-  if(is.null(random) & is.null(fixed)){
-    return(
-      warning("Both random and fixed parameters are NULL. At least one of them must contain the name of one or more covariables.")
-    )
+  
+  #Checking whether all covariables declared in the random parameter are in the data matrix
+  covs <- dimnames(statistics[[1]])[[3]]
+  cnms <- sum(!(random %in% covs))
+  if(cnms > 0){
+    not_in_covs <- which(!(random %in% covs))
+    stop(paste("Covariables", random[not_in_covs], "might not be in the data matrix.", "Check parameter random for typos."))
   }
-
+  
   estimates <- vector("list")
   t1 <- Sys.time()
   for(i in 1:length(edgelist)){
@@ -323,7 +305,8 @@ hrem <- function(edgelist,
 
     rem <- remstimate::remstimate(reh = edgelistREH,
                                   stats = statistics[[i]],
-                                  method = "MLE"
+                                  method = "MLE",
+                                  #model = "tie",
     )
 
     estimates[[i]] <- list(coef = rem$coefficients, var = rem$vcov)
@@ -331,6 +314,8 @@ hrem <- function(edgelist,
     print(paste("MLE for cluster", i, "has been obtained."))
 
   }
+  #getting the names for the fixed-effects
+  fixed <- dimnames(statistics[[1]])[3][[1]]
 
   names(estimates) <- paste0("cluster_", 1:length(edgelist))
 
@@ -343,66 +328,60 @@ hrem <- function(edgelist,
     #We assume that all statistics array will contain the same statistics
     beta_hat <- as.matrix(sapply(estimates, function(x) (x$coef[random])))
     omega_hat <- lapply(estimates, function(x) as.matrix(x$var[random,random]))
+    omega_hat <- simplify2array(omega_hat, except = NULL)
+
+    #Decomposing the covariance matrix to compute the conditional distribution of the random effects
+    omega_11 <- lapply(estimates, function(x) matrix(x$var[!(fixed %in% random),!(fixed %in% random)], nrow = sum(!(fixed %in% random)), ncol = sum(!(fixed %in% random))))
+    omega_22 <- lapply(estimates, function(x) matrix(x$var[random,random], nrow = p, ncol = p))
+    omega_21 <- lapply(estimates, function(x) matrix(x$var[!(fixed %in% random),(fixed %in% random)], ncol = sum(fixed %in% random), nrow = sum(!(fixed %in% random))))
+    omega_11 <- simplify2array(omega_11, except = NULL)
+    omega_22 <- simplify2array(omega_22, except = NULL)
+    omega_21 <- simplify2array(omega_21, except = NULL)
     if(p == 1){
-      omega_hat <- array(simplify2array(omega_hat), dim = c(p,p,K))
       beta_hat <- t(beta_hat)
-    } else {
-      omega_hat <- simplify2array(omega_hat)
     }
-    fixedModel <- FALSE
+    randomModel <- TRUE
   } else {
     p <- 0
     beta_hat <- matrix(0, nrow = 1, ncol = 1)
     omega_hat <- array(0, dim = c(1,1,K))
-    fixedModel <- TRUE
-  }
-
-
-  if(!is.null(fixed)){
-    q <- length(fixed) #number of fixed effects
-    psi <- as.matrix(sapply(estimates, function(x) x$coef[fixed]))
-    SigmaPsi <- lapply(estimates, function(x) x$var[fixed,fixed])
-    if(q > 1){
-      SigmaPsi <- sapply(SigmaPsi, diag)
-    } else if(q == 1){
-      SigmaPsi <- matrix(simplify2array(SigmaPsi), ncol = K)
-      psi <- t(psi)
-    }
+    omega_11 <- array(0, dim = c(1,1,K))
+    omega_22 <- array(0, dim = c(1,1,K))
+    omega_21 <- array(0, dim = c(1,1,K))
+    delta <- array(0, dim = c(1, 1, K))
     randomModel <- FALSE
-  } else {
-    psi <- matrix(0, nrow = 1, ncol = 1)
-    SigmaPsi <- matrix(0, nrow = 1, ncol = 1)
-    q <- 0
-    randomModel <- TRUE
   }
 
-  nu <- sapply(edgelist, nrow) - p #vectors of df's
-  if(sum(nu < 0) != 0){
-    return(paste("Nu parameter must be greater than zero for all groups! You either need more events or less covariates."))
+  q <- length(fixed) #number of fixed effects
+  psi <- as.matrix(sapply(estimates, function(x) x$coef))
+  SigmaPsi <- lapply(estimates, function(x) x$var)
+  if(q == 1){
+    SigmaPsi <- array(simplify2array(SigmaPsi), dim = c(q,q,K))
+    psi <- t(psi)
+  } else {
+    SigmaPsi <- simplify2array(SigmaPsi)
   }
 
   if(p == 0){
     mu <- t(mvtnorm::rmvnorm(Nchain, mean = rep(0,1))) #random-effect means
     #I'm making a confusing, using lambda here, but on the paper, these are called alphas
     Lambda <- matrix(stats::rgamma(1*Nchain, 1, 1), ncol = Nchain) #scale mixture for cov mat
-    omega <- matrix(stats::rgamma(K*Nchain,1,1),ncol = Nchain) #scale mixture for likelihood
     #initial values for MCMC
-    beta <- array(NA, dim = c(1, K, Nchain)) #group-specific effects
+    delta <- array(NA, dim = c(1, K, Nchain)) #group-specific effects
     sigma <- array(NA, dim = c(1, 1, Nchain)) #random-effect covariance matrix
     for(i in 1:Nchain){
-      beta[,,i] <- t(mvtnorm::rmvnorm(K, mean = rep(0,1)))
+      delta[,,i] <- t(mvtnorm::rmvnorm(K, mean = rep(0,1)))
       sigma[,,i] <- diag(stats::rpois(1,100), nrow = 1)
     }
   } else {
-    mu <- t(mvtnorm::rmvnorm(Nchain, mean = rep(0,p))) #random-effect means
+    mu <- t(mvtnorm::rmvnorm(Nchain, mean = rowMeans(beta_hat))) #random-effect means
     #I'm making a confusing, using lambda here, but on the paper, these are called alphas
     Lambda <- matrix(stats::rgamma(p*Nchain, 1, 1), ncol = Nchain) #scale mixture for cov mat
-    omega <- matrix(stats::rgamma(K*Nchain,1,1),ncol = Nchain) #scale mixture for likelihood
     #initial values for MCMC
-    beta <- array(NA, dim = c(p, K, Nchain)) #group-specific effects
+    delta <- array(NA, dim = c(p, K, Nchain)) #group-specific effects
     sigma <- array(NA, dim = c(p, p, Nchain)) #random-effect covariance matrix
     for(i in 1:Nchain){
-      beta[,,i] <- t(mvtnorm::rmvnorm(K, mean = rep(0,p)))
+      delta[,,i] <- t(mvtnorm::rmvnorm(K, mean = rep(0,p)))
       sigma[,,i] <- diag(stats::rpois(p,100), nrow = p)
     }
   }
@@ -410,8 +389,29 @@ hrem <- function(edgelist,
   #Prior for Mu and Sigma
   eta <- 2
   xi <- 10 #it can be an arbitrarily large number (Gelman, 2006)
-  TauMu <- diag(10, p) #scale matrix of mu
-  TauPsi <- rep(10, q) #scale matrix of psi
+  TauMean <- diag(10, q) #scale matrix of mu
+  if(!is.null(random)){
+    #This is a matrix used to separate the random and the fixed effects, in the conditional distribution of delta
+    muMat <- matrix(0, nrow = p, ncol = q)
+    ind <- which(fixed %in% random)
+    for(i in 1:length(ind)){muMat[i,ind[i]] <- 1}
+
+    if(p != q){
+      #This is a matrix used to separate the random and the fixed effects, in the conditional distribution of delta
+      psiMat <- matrix(0, nrow = q-p, ncol = q)
+      ind <- which(!(fixed %in% random))
+      for(i in 1:length(ind)){psiMat[i,ind[i]] <- 1}
+      #initial values
+    } else {
+      #This is a matrix used to separate the random and the fixed effects, in the conditional distribution of delta
+      psiMat <- muMat
+    }
+    #initial values
+    psi_in <- t(mvtnorm::rmvnorm(Nchain, mean =  psiMat %*% rowMeans(psi))) #random-effect means
+
+  } else {
+    psi_in <- t(mvtnorm::rmvnorm(Nchain, mean = rowMeans(psi))) #random-effect means
+  }
 
   print(paste("Running the Gibbs sampler."))
 
@@ -422,36 +422,37 @@ hrem <- function(edgelist,
                   p = p,
                   q = q,
                   K = K,
-                  nu = nu,
-                  beta = beta,
+                  delta = delta,
                   beta_hat = beta_hat,
                   omega_hat = omega_hat,
+                  omega_hat_11 = omega_11,
+                  omega_hat_21 = omega_21,
+                  omega_hat_22 = omega_22,
                   Mu = mu,
                   Sigma = sigma,
                   eta = eta,
                   Lambda = Lambda,
                   xi = xi,
-                  TauMu = TauMu,
-                  TauPsi = TauPsi,
-                  SigmaPsi = SigmaPsi,
-                  omega = omega,
-                  psi = psi,
-                  randomModel = randomModel,
-                  fixedModel =  fixedModel)
+                  SigmaMean = SigmaPsi,
+                  psi = psi_in,
+                  psi_hat = psi,
+                  random_effect = muMat,
+                  fixed_effect = psiMat,
+                  randomModel = randomModel)
 
   if(!is.null(fixed)){
-    colnames(MCMC$psi) <- fixed
+    colnames(MCMC$mu) <- fixed
   }
   if(!is.null(random)){
-    colnames(MCMC$mu) <- random
+    #colnames(MCMC$mu) <- random
     colnames(MCMC$alpha) <- random
     MCMC$MLE <- estimates
     for(i in 1:Nchain){
-      colnames(MCMC$beta[[i]]) <- random
-      colnames(MCMC$sigma[[i]]) <- rownames(MCMC$sigma[[i]]) <- random
-      dimnames(MCMC$beta[[i]])[[3]] <- paste0("cluster_", 1:K)
+      dimnames(MCMC$delta[[i]])[[2]] <- random
+      dimnames(MCMC$sigma[[i]])[[1]] <- dimnames(MCMC$sigma[[i]])[[2]] <- random
+      dimnames(MCMC$delta[[i]])[[3]] <- paste0("cluster_", 1:K)
     }
-    names(MCMC$beta) <- paste0("chain_", 1:Nchain)
+    names(MCMC$delta) <- paste0("chain_", 1:Nchain)
     names(MCMC$sigma) <- paste0("chain_", 1:Nchain)
   }
   if(is.null(random)){
@@ -482,9 +483,7 @@ hrem <- function(edgelist,
 #' @param edgelist a list containing multiple relational event sequences
 #' @param statistics a list containing multiple \code{remstats} objects
 #' @param random_sender a vector containing the names of the covariates that will be treated as random effects in the sender model.
-#' @param fixed_sender a vector containing the names of the covariates that will be treated as fixed effects in sender model.
 #' @param random_receiver a vector containing the names of the covariates that will be treated as random effects in the receiver model.
-#' @param fixed_receiver a vector containing the names of the covariates that will be treated as fixed effects in the receiver model.
 #' @param Niter number of iterations of the Gibbs sampler. The default is \code{Niter = 100000}.
 #' @param Nchain number of chains of the Gibbs sampler.The default is \code{Nchain = 2}.
 #' @param NburnIn number of samples to be discarded.The default is \code{NburnIn = 5000}.
@@ -496,53 +495,57 @@ hrem <- function(edgelist,
 #' @return  A list containing the output of the Gibbs sampler for this model.
 hremActor <- function(edgelist,
                       statistics,
-                      random_sender = NULL,
-                      fixed_sender = NULL,
-                      random_receiver = NULL,
-                      fixed_receiver = NULL,
-                      actors = NULL,
-                      ordinal = FALSE,
-                      directed = TRUE,
                       Niter = 10000,
                       Nchain = 2,
                       NburnIn = 5000,
-                      Nthin = 10){
+                      Nthin = 10,
+                      random_sender = NULL,
+                      random_receiver = NULL,
+                      actors = NULL,
+                      ordinal = FALSE,
+                      directed = TRUE){
   #HERE THE FUNCTION STARTS
-
-  if(is.null(random_sender) & is.null(fixed_sender)){
-    return(
-      warning("Both random_sender and fixed_sender parameters are NULL. At least one of them must contain the name of one or more covariables.")
-    )
+  
+  #Checking whether all covariables declared in the random parameter are in the data matrix
+  covs_sender <- dimnames(statistics[[1]]$sender_stats)[[3]]
+  cnms_sender <- sum(!(random_sender %in% covs_sender))
+  if(cnms_sender > 0){
+    not_in_covs_sender <- which(!(random_sender %in% covs_sender))
+    stop(paste("Covariables", random_sender[not_in_covs_sender], "might not be in the sender data matrix.", "Check parameter random for typos."))
   }
-  if(is.null(random_receiver) & is.null(fixed_receiver)){
-    return(
-      warning("Both random_receiver and fixed_receiver parameters are NULL. At least one of them must contain the name of one or more covariables.")
-    )
+  
+  covs_receiver <- dimnames(statistics[[1]]$receiver_stats)[[3]]
+  cnms_receiver <- sum(!(random_receiver %in% covs_receiver))
+  if(cnms_receiver > 0){
+    not_in_covs_receiver <- which(!(random_receiver %in% covs_receiver))
+    stop(paste("Covariables", random_receiver[not_in_covs_receiver], "might not be in the receiver data matrix.", "Check parameter random for typos."))
   }
-
+  
   estimates <- vector("list")
   t1 <- Sys.time()
   for(i in 1:length(edgelist)){
     edgelistREH <- remify::remify(edgelist[[i]], model = "actor", actors = actors[[i]],
-                               directed = directed, ordinal = ordinal)
-
+                                  directed = directed, ordinal = ordinal)
+    
     rem <- remstimate::remstimate(reh = edgelistREH,
                                   stats = statistics[[i]],
-                                  method = "MLE"
+                                  method = "MLE",
+                                  #model = "actor",
     )
-
+    
     estimates[[i]] <- list(sender = list(coef = rem$sender_model$coefficients, var = rem$sender_model$vcov),
                            receiver = list(coef = rem$receiver_model$coefficients, var = rem$receiver_model$vcov))
-
+    
     print(paste("MLE for cluster", i, "has been obtained."))
-
+    
   }
-
-  names(estimates) <- paste0("cluster_", 1:length(edgelist))
-
+  
+  fixed_sender <- dimnames(statistics[[1]]$sender_stats)[3][[1]]
+  fixed_receiver <- dimnames(statistics[[1]]$receiver_stats)[3][[1]]
+  
   #checking whether all statistics array contain the same number of covariates
   K <- length(edgelist) #number of groups
-
+  
   #Checking for random effects
   #SENDER MODEL
   if(!is.null(random_sender)){
@@ -550,92 +553,99 @@ hremActor <- function(edgelist,
     #Sender model
     gamma_hat <- as.matrix(sapply(estimates, function(x) (x$sender$coef[random_sender])))
     zeta_hat <- lapply(estimates, function(x) as.matrix(x$sender$var[random_sender,random_sender]))
+    zeta_hat <- simplify2array(zeta_hat, except = NULL)
+    
+    #Decomposing the covariance matrix to compute the conditional distribution of the random effects
+    zeta_11 <- lapply(estimates, function(x) matrix(x$sender$var[!(fixed_sender %in% random_sender),!(fixed_sender %in% random_sender)], ncol = sum(!(fixed_sender %in% random_sender)), nrow = sum(!(fixed_sender %in% random_sender))))
+    zeta_22 <- lapply(estimates, function(x) matrix(x$sender$var[random_sender,random_sender], nrow = p, ncol = p))
+    zeta_21 <- lapply(estimates, function(x) matrix(x$sender$var[!(fixed_sender %in% random_sender),(fixed_sender %in% random_sender)], ncol = sum(fixed_sender %in% random_sender), nrow = sum(!(fixed_sender %in% random_sender))))
+    zeta_11 <- simplify2array(zeta_11, except = NULL)
+    zeta_22 <- simplify2array(zeta_22, except = NULL)
+    zeta_21 <- simplify2array(zeta_21, except = NULL)
     #Fixing the structure of the random effects in the sender model
     if(p == 1){
-      zeta_hat <- array(simplify2array(zeta_hat), dim = c(p,p,K))
       gamma_hat <- t(gamma_hat)
-    } else {
-      zeta_hat <- simplify2array(zeta_hat)
     }
-    fixModelSnd <- FALSE
+    randomModelSnd <- TRUE
   } else {
     p <- 0
     gamma_hat <- matrix(0, nrow = 1, ncol = 1)
     zeta_hat <- array(0, dim = c(1,1,K))
-    fixModelSnd <- TRUE
+    zeta_11 <- array(0, dim = c(1,1,K))
+    zeta_22 <- array(0, dim = c(1,1,K))
+    zeta_21 <- array(0, dim = c(1,1,K))
+    gamma <- array(0, dim = c(1, 1, K))
+    randomModelSnd <- FALSE
   }
-
+  
   #RECEIVER MODEL
   if(!is.null(random_receiver)){
     v <- length(random_receiver) #random effects receiver model
     #Receiver model
     beta_hat <- as.matrix(sapply(estimates, function(x) (x$receiver$coef[random_receiver])))
     omega_hat <- lapply(estimates, function(x) as.matrix(x$receiver$var[random_receiver,random_receiver]))
+    omega_hat <- simplify2array(omega_hat, except = NULL)
+    
+    #Decomposing the covariance matrix to compute the conditional distribution of the random effects
+    omega_11 <- lapply(estimates, function(x) matrix(x$receiver$var[!(fixed_receiver %in% random_receiver),!(fixed_receiver %in% random_receiver)], ncol = sum(!(fixed_receiver %in% random_receiver))))
+    omega_22 <- lapply(estimates, function(x) matrix(x$receiver$var[random_receiver,random_receiver], nrow = v, ncol = v))
+    omega_21 <- lapply(estimates, function(x) matrix(x$receiver$var[!(fixed_receiver %in% random_receiver),(fixed_receiver %in% random_receiver)], ncol = sum(fixed_receiver %in% random_receiver), nrow = sum(!(fixed_receiver %in% random_receiver))))
+    omega_11 <- simplify2array(omega_11, except = NULL)
+    omega_22 <- simplify2array(omega_22, except = NULL)
+    omega_21 <- simplify2array(omega_21, except = NULL)
     #Fixing the structure of the random effects in the receiver model
     if(v == 1){
-      omega_hat <- array(simplify2array(omega_hat), dim = c(v,v,K))
       beta_hat <- t(beta_hat)
-    } else {
-      omega_hat <- simplify2array(omega_hat)
     }
-    fixModelRec <- FALSE
+    randomModelRec <- TRUE
   } else {
     v <- 0
     beta_hat <- matrix(0, nrow = 1, ncol = 1)
     omega_hat <- array(0, dim = c(1,1,K))
-    fixModelRec <- TRUE
+    omega_11 <- array(0, dim = c(1,1,K))
+    omega_22 <- array(0, dim = c(1,1,K))
+    omega_21 <- array(0, dim = c(1,1,K))
+    beta <- array(0, dim = c(1, 1, K))
+    randomModelRec <- FALSE
   }
-
-
+  
+  
   #Checking if the receiver model contains fixed effects
   if(!is.null(fixed_receiver)){
     u <- length(fixed_receiver) #number of fixed effects
-    psi <- as.matrix(sapply(estimates, function(x) x$receiver$coef[fixed_receiver]))
-    SigmaPsi <- lapply(estimates, function(x) x$receiver$var[fixed_receiver,fixed_receiver])
-    if(u > 1){
-      SigmaPsi <- sapply(SigmaPsi, diag)
-    } else if(u == 1){
-      SigmaPsi <- matrix(simplify2array(SigmaPsi), ncol = K)
+    psi <- as.matrix(sapply(estimates, function(x) x$receiver$coef))
+    SigmaPsi <- lapply(estimates, function(x) as.matrix(x$receiver$var))
+    SigmaPsi <-  simplify2array(SigmaPsi, except = NULL)
+    if(u == 1){
       psi <- t(psi)
     }
-    randomModelRec <- FALSE
   } else {
     psi <- matrix(0, nrow = 1, ncol = 1)
     SigmaPsi <- matrix(0, nrow = 1, ncol = 1)
     u <- 0
-    randomModelRec <- TRUE
   }
-
+  
   #Checking if the sender model contains fixed effects
   if(!is.null(fixed_sender)){
     q <- length(fixed_sender) #number of fixed effects
-    phi <- as.matrix(sapply(estimates, function(x) x$sender$coef[fixed_sender]))
-    SigmaPhi <- lapply(estimates, function(x) x$sender$var[fixed_sender,fixed_sender])
-    if(q > 1){
-      SigmaPhi <- sapply(SigmaPhi, diag)
-    } else if(q == 1){
-      SigmaPhi <- matrix(simplify2array(SigmaPhi), ncol = K)
+    phi <- as.matrix(sapply(estimates, function(x) x$sender$coef))
+    SigmaPhi <- lapply(estimates, function(x) as.matrix(x$sender$var))
+    SigmaPhi <- simplify2array(SigmaPhi, except = NULL)
+    if(q == 1){
       phi <- t(phi)
     }
-    randomModelSnd <- FALSE
   } else {
     phi <- matrix(0, nrow = 1, ncol = 1)
     SigmaPhi <- matrix(0, nrow = 1, ncol = 1)
     q <- 0
-    randomModelSnd <- TRUE
   }
-
+  
   ###########################################################################################
   ###########################################################################################
   ###########################################################################################
-
+  
   #Setting up the additional quantities needed
-
-  nu <- sapply(edgelist, nrow) - p #vectors of df's
-  if(sum(nu < 0) != 0){
-    return(paste("Nu parameter must be greater than zero for all groups! You either need more events or less covariates."))
-  }
-
+  
   if(v == 0){
     #initial values for MCMC
     Lambda_beta <- matrix(stats::rgamma(1*Nchain, 1, 1), ncol = Nchain) #scale mixture for cov mat
@@ -677,21 +687,60 @@ hremActor <- function(edgelist,
       zeta[,,i] <- diag(stats::rpois(p,100), nrow = p)
     }
   }
-
-  #Initial values for the scale mixture parameter
-  omega_gamma <- matrix(stats::rgamma(K*Nchain,1,1),ncol = Nchain) #scale mixture for likelihood
-  omega_beta <- matrix(stats::rgamma(K*Nchain,1,1),ncol = Nchain) #scale mixture for likelihood
-
+  
   #Prior for Mu and Sigma
   eta <- 2
   xi <- 10 #it can be an arbitrarily large number (Gelman, 2006)
-  TauMu <- diag(10, v) #scale matrix of mu
-  TauPsi <- rep(10, u) #scale matrix of psi
-  TauMuG <- diag(10, p) #scale matrix of mu
-  TauPhi <- rep(10, q) #scale matrix of psi
-
+  
+  #Building the matrices that will separate random and fixed effects for receiver model
+  if(!is.null(random_sender)){
+    #This is a matrix used to separate the random and the fixed effects, in the conditional distribution of delta
+    muGMat <- matrix(0, nrow = p, ncol = q)
+    ind <- which(fixed_sender %in% random_sender)
+    for(i in 1:length(ind)){muGMat[i,ind[i]] <- 1}
+    
+    if(p != q){
+      #This is a matrix used to separate the random and the fixed effects, in the conditional distribution of delta
+      phiMat <- matrix(0, nrow = q-p, ncol = q)
+      ind <- which(!(fixed_sender %in% random_sender))
+      for(i in 1:length(ind)){phiMat[i,ind[i]] <- 1}
+      #initial values
+    } else {
+      #This is a matrix used to separate the random and the fixed effects, in the conditional distribution of delta
+      phiMat <- muGMat
+    }
+    
+    #initial values
+    phi_in <- t(mvtnorm::rmvnorm(Nchain, mean =  phiMat %*% as.matrix(rowMeans(phi)))) #random-effect means
+    
+  } else {
+    phi_in <- t(mvtnorm::rmvnorm(Nchain, mean = rowMeans(phi))) #random-effect means
+  }
+  
+  #Building the matrices that will separate random and fixed effects for receiver model
+  if(!is.null(random_receiver)){
+    #This is a matrix used to separate the random and the fixed effects, in the conditional distribution of delta
+    muBMat <- matrix(0, nrow = v, ncol = u)
+    ind <- which(fixed_receiver %in% random_receiver)
+    for(i in 1:length(ind)){muBMat[i,ind[i]] <- 1}
+    
+    if(u != v){
+      #This is a matrix used to separate the random and the fixed effects, in the conditional distribution of delta
+      psiMat <- matrix(0, nrow = u-v, ncol = u)
+      ind <- which(!(fixed_receiver %in% random_receiver))
+      for(i in 1:length(ind)){psiMat[i,ind[i]] <- 1}
+    } else {
+      psiMat <- muBMat
+    }
+    #initial values
+    psi_in <- t(mvtnorm::rmvnorm(Nchain, mean =  psiMat %*% as.matrix(rowMeans(psi)))) #random-effect means
+    
+  } else {
+    psi_in <- t(mvtnorm::rmvnorm(Nchain, mean = rowMeans(psi))) #random-effect means
+  }
+  
   print(paste("Running the Gibbs sampler."))
-
+  
   MCMC <- samplerActor(Niter = Niter,
                        Nchain = Nchain,
                        NburnIn = NburnIn,
@@ -699,68 +748,69 @@ hremActor <- function(edgelist,
                        v = v,
                        u = u,
                        K = K,
-                       nu = nu,
                        beta = beta,
                        beta_hat = beta_hat,
                        omega_hat = omega_hat,
+                       omega_hat_11 = omega_11,
+                       omega_hat_21 = omega_21,
+                       omega_hat_22 = omega_22,
                        MuB = mu_beta,
                        Sigma = sigma,
                        eta = eta,
                        LambdaB =  Lambda_beta,
                        xi = xi,
-                       TauMuB = TauMu,
-                       TauPsi = TauPsi,
                        SigmaPsi = SigmaPsi,
-                       omegaB = omega_beta,
-                       psi = psi,
+                       psi = psi_in,
+                       psi_hat = psi,
                        p = p,
                        q = q,
                        gamma = gamma,
                        gamma_hat = gamma_hat,
                        zeta_hat = zeta_hat,
+                       zeta_hat_11 = zeta_11,
+                       zeta_hat_21 = zeta_21,
+                       zeta_hat_22 = zeta_22,
                        MuG = mu_gamma,
                        Zeta = zeta,
                        LambdaG = Lambda_gamma,
-                       TauMuG = TauMuG,
-                       TauPhi = TauPhi,
                        SigmaPhi = SigmaPhi,
-                       omegaG = omega_gamma,
-                       phi = phi,
+                       phi = phi_in,
+                       phi_hat = phi,
+                       fixed_effect_rec = psiMat,
+                       random_effect_rec = muBMat,
+                       fixed_effect_snd = phiMat,
+                       random_effect_snd = muGMat,
                        randomModelSnd = randomModelSnd,
-                       randomModelRec = randomModelRec,
-                       fixModelSnd = fixModelSnd,
-                       fixModelRec = fixModelRec)
-
+                       randomModelRec = randomModelRec)
+  
   print(paste("The Gibbs sampler has finished."))
-
+  
   #Receiver model
-  if(!is.null(fixed_receiver)){colnames(MCMC$receiver_choice$psi) <- fixed_receiver}
+  colnames(MCMC$receiver_model$mu) <- fixed_receiver
   if(!is.null(random_receiver)){
-    colnames(MCMC$receiver_choice$mu) <- random_receiver
-    colnames(MCMC$receiver_choice$alpha) <- random_receiver
+    colnames(MCMC$receiver_model$alpha) <- random_receiver
     MCMC$MLE <- estimates
     for(i in 1:Nchain){
-      colnames(MCMC$receiver_choice$beta[[i]]) <- random_receiver
-      colnames(MCMC$receiver_choice$sigma[[i]]) <- rownames(MCMC$receiver_choice$sigma[[i]]) <- random_receiver
-      dimnames(MCMC$receiver_choice$beta[[i]])[[3]] <- paste0("cluster_", 1:K)
+      colnames(MCMC$receiver_model$beta[[i]]) <- random_receiver
+      colnames(MCMC$receiver_model$sigma[[i]]) <- rownames(MCMC$receiver_model$sigma[[i]]) <- random_receiver
+      dimnames(MCMC$receiver_model$beta[[i]])[[3]] <- paste0("cluster_", 1:K)
     }
-    names(MCMC$receiver_choice$beta) <- paste0("chain_", 1:Nchain)
-    names(MCMC$receiver_choice$sigma) <- paste0("chain_", 1:Nchain)
+    names(MCMC$receiver_model$beta) <- paste0("chain_", 1:Nchain)
+    names(MCMC$receiver_model$sigma) <- paste0("chain_", 1:Nchain)
   }
-
+  
   #Sender model
-  if(!is.null(fixed_sender)){colnames(MCMC$sender_rate$phi) <- fixed_sender}
+  colnames(MCMC$sender_model$mu) <- fixed_sender
   if(!is.null(random_sender)){
-    colnames(MCMC$sender_rate$mu) <- random_sender
-    colnames(MCMC$sender_rate$alpha) <- random_sender
+    colnames(MCMC$sender_model$alpha) <- random_sender
     MCMC$MLE <- estimates
     for(i in 1:Nchain){
-      colnames(MCMC$sender_rate$gamma[[i]]) <- random_sender
-      colnames(MCMC$sender_rate$sigma[[i]]) <- rownames(MCMC$sender_rate$sigma[[i]]) <- random_sender
-      dimnames(MCMC$sender_rate$gamma[[i]])[[3]] <- paste0("cluster_", 1:K)
+      dimnames(MCMC$sender_model$gamma[[i]])[[2]] <- random_sender
+      colnames(MCMC$sender_model$sigma[[i]]) <- rownames(MCMC$sender_model$sigma[[i]]) <- random_sender
+      dimnames(MCMC$sender_model$gamma[[i]])[[3]] <- paste0("cluster_", 1:K)
     }
-    names(MCMC$sender_rate$gamma) <- paste0("chain_", 1:Nchain)
-    names(MCMC$sender_rate$sigma) <- paste0("chain_", 1:Nchain)
+    names(MCMC$sender_model$gamma) <- paste0("chain_", 1:Nchain)
+    names(MCMC$sender_model$sigma) <- paste0("chain_", 1:Nchain)
   }
   if(is.null(random_sender)){
     MCMC$random_sender <- F
@@ -779,6 +829,7 @@ hremActor <- function(edgelist,
   MCMC$run_time <- Sys.time() - t1
   return(MCMC)
 }
+
 
 #########################################################################################
 #########################################################################################
@@ -873,20 +924,20 @@ fixef_metarem <- function(object) {
     #The reason for the following lines is that the mean of the random effects
     #should also be seen as a fixed effect
     if(object$model == "tie"){
-      a <- abind::abind(object$mu, object$psi, along = 2)
+      a <- object$mu
       fe <- rowMeans(colMeans(a))
       std <- rowMeans(apply(a, c(2,3), stats::sd))
     } else { #model == "actor
-      a <- abind::abind(object$sender_rate$mu, object$sender_rate$phi, along = 2)
+      a <- abind::abind(object$sender_model$mu, object$sender_model$phi, along = 2)
       snd <- rowMeans(colMeans(a))
       stdA <- rowMeans(apply(a, c(2,3), stats::sd))
-      b <- abind::abind(object$receiver_choice$mu, object$receiver_choice$psi, along = 2)
+      b <- object$receiver_model$mu
       rec <- rowMeans(colMeans(b))
       stdB <- rowMeans(apply(b, c(2,3), stats::sd))
-      fe <- list(sender_rate = snd,
-                 receiver_choice = rec)
-      std <- list(sender_rate = stdA,
-                  receiver_choice = stdB)
+      fe <- list(sender_model = snd,
+                 receiver_model = rec)
+      std <- list(sender_model = stdA,
+                  receiver_model = stdB)
     }
     return(list(fixed_effects = fe,
                 std_error = std))
@@ -916,20 +967,20 @@ ranef_metarem <- function(object) {
       if(is.na(object$random)){
         stop("Model does not contain random effects.")
       } else {
-        variable <- dimnames(object$beta[[1]])[[2]]
-        number_rnd_eff <- dim(object$beta[[1]])[2]
+        variable <- dimnames(object$delta[[1]])[[2]]
+        number_rnd_eff <- dim(object$delta[[1]])[2]
         if(number_rnd_eff == 1){
-          rnd <- matrix(rowMeans(sapply(object$beta, function(y) apply(y, 3, colMeans))), ncol = 1)
-          std <- matrix(rowMeans(sapply(object$beta, function(y) apply(y, 3, stats::sd))), ncol = 1)
+          rnd <- matrix(rowMeans(sapply(object$delta, function(y) apply(y, 3, colMeans))), ncol = 1)
+          std <- matrix(rowMeans(sapply(object$delta, function(y) apply(y, 3, stats::sd))), ncol = 1)
           colnames(rnd) <- colnames(std) <- variable
         } else {
           if(is.na(object$random)){
             stop("Model does not contain random effects.")
           } else{
-            a <- lapply(object$beta, function(y) t(colMeans(y)))
+            a <- lapply(object$delta, function(y) t(colMeans(y)))
             a <- simplify2array(a)
             rnd <- t(apply(a, 1, rowMeans))
-            std <- lapply(object$beta, function(y) t(apply(y, c(2,3), stats::sd)))
+            std <- lapply(object$delta, function(y) t(apply(y, c(2,3), stats::sd)))
             std <- simplify2array(std)
             std <- t(apply(std, 1, rowMeans))
           }
@@ -943,19 +994,19 @@ ranef_metarem <- function(object) {
           rnd_snd <- NULL
           std_snd <- NULL
         } else {
-          variable <- dimnames(object$sender_rate$gamma[[1]])[[2]]
-          number_rnd_snd <- dim(object$sender_rate$gamma[[1]])[2]
+          variable <- dimnames(object$sender_model$gamma[[1]])[[2]]
+          number_rnd_snd <- dim(object$sender_model$gamma[[1]])[2]
           if(number_rnd_snd == 1){
-            rnd_snd <- matrix(rowMeans(sapply(object$sender_rate$gamma, function(y) apply(y, 3, colMeans))), ncol = 1)
-            std_snd <- matrix(rowMeans(sapply(object$sender_rate$gamma, function(y) apply(y, 3, stats::sd))), ncol = 1)
+            rnd_snd <- matrix(rowMeans(sapply(object$sender_model$gamma, function(y) apply(y, 3, colMeans))), ncol = 1)
+            std_snd <- matrix(rowMeans(sapply(object$sender_model$gamma, function(y) apply(y, 3, stats::sd))), ncol = 1)
             colnames(rnd_snd) <- colnames(std_snd) <- variable
           } else {
             #here comes the case of multiple random effects
             #here comes the case of multiple random effects
-            a <- lapply(object$sender_rate$gamma, function(y) t(colMeans(y)))
+            a <- lapply(object$sender_model$gamma, function(y) t(colMeans(y)))
             a <- simplify2array(a)
             rnd_snd <- t(apply(a, 1, rowMeans))
-            std <- lapply(object$sender_rate$gamma, function(y) t(apply(y, c(2,3), stats::sd)))
+            std <- lapply(object$sender_model$gamma, function(y) t(apply(y, c(2,3), stats::sd)))
             std <- simplify2array(std)
             std_snd <- t(apply(std, 1, rowMeans))
           }
@@ -964,27 +1015,27 @@ ranef_metarem <- function(object) {
           rnd_rec <- NULL
           std_rec <- NULL
         } else {
-          variable <- dimnames(object$receiver_choice$beta[[1]])[[2]]
-          number_rnd_rec <- dim(object$receiver_choice$beta[[1]])[2]
+          variable <- dimnames(object$receiver_model$beta[[1]])[[2]]
+          number_rnd_rec <- dim(object$receiver_model$beta[[1]])[2]
           if(number_rnd_rec == 1){
-            rnd_rec <- matrix(rowMeans(sapply(object$receiver_choice$beta, function(y) apply(y, 3, colMeans))), ncol = 1)
-            std_rec <- matrix(rowMeans(sapply(object$receiver_choice$beta, function(y) apply(y, 3, stats::sd))), ncol = 1)
+            rnd_rec <- matrix(rowMeans(sapply(object$receiver_model$beta, function(y) apply(y, 3, colMeans))), ncol = 1)
+            std_rec <- matrix(rowMeans(sapply(object$receiver_model$beta, function(y) apply(y, 3, stats::sd))), ncol = 1)
             colnames(rnd_rec) <- colnames(std_rec) <- variable
           } else {
             #here comes the case of multiple random effects
-            a <- lapply(object$receiver_choice$beta, function(y) t(colMeans(y)))
+            a <- lapply(object$receiver_model$beta, function(y) t(colMeans(y)))
             a <- simplify2array(a)
             rnd_rec <- t(apply(a, 1, rowMeans))
-            std <- lapply(object$receiver_choice$beta, function(y) t(apply(y, c(2,3), stats::sd)))
+            std <- lapply(object$receiver_model$beta, function(y) t(apply(y, c(2,3), stats::sd)))
             std <- simplify2array(std)
             std_rec<- t(apply(std, 1, rowMeans))
           }
         }
       }
-      rnd <- list(sender_rate = rnd_snd,
-                  receiver_choice = rnd_rec)
-      std <- list(sender_rate = std_snd,
-                  receiver_choice = std_rec)
+      rnd <- list(sender_model = rnd_snd,
+                  receiver_model = rnd_rec)
+      std <- list(sender_model = std_snd,
+                  receiver_model = std_rec)
     }
 
     return(list(random_effects = rnd,
@@ -1025,11 +1076,11 @@ VarCov_metarem <- function(object){
       }
     } else { #model = "actor"
       if(object$random_sender){
-        sigma <- lapply(object$sender_rate$sigma, function(x) rowMeans(x, dims = 2))
+        sigma <- lapply(object$sender_model$sigma, function(x) rowMeans(x, dims = 2))
         sigma <- simplify2array(sigma)
-        if(dim(object$sender_rate$sigma[[1]])[1] == 1){
+        if(dim(object$sender_model$sigma[[1]])[1] == 1){
           VarCovSnd <- as.matrix(mean(sigma))
-          nome <- dimnames(object$sender_rate$sigma[[1]])[[1]]
+          nome <- dimnames(object$sender_model$sigma[[1]])[[1]]
           rownames(VarCovSnd) <- colnames(VarCovSnd) <- nome
         } else {
           VarCovSnd <- rowMeans(sigma, dims = 2)
@@ -1039,11 +1090,11 @@ VarCov_metarem <- function(object){
         VarCovSnd <- NULL
       }
       if(object$random_receiver){
-        sigma <- lapply(object$receiver_choice$sigma, function(x) rowMeans(x, dims = 2))
+        sigma <- lapply(object$receiver_model$sigma, function(x) rowMeans(x, dims = 2))
         sigma <- simplify2array(sigma)
-        if(dim(object$receiver_choice$sigma[[1]])[1] == 1){
+        if(dim(object$receiver_model$sigma[[1]])[1] == 1){
           VarCovRec <- as.matrix(mean(sigma))
-          nome <- dimnames(object$receiver_choice$sigma[[1]])[[1]]
+          nome <- dimnames(object$receiver_model$sigma[[1]])[[1]]
           rownames(VarCovRec) <- colnames(VarCovRec) <- nome
         } else {
           VarCovRec <- rowMeans(sigma, dims = 2)
@@ -1057,8 +1108,8 @@ VarCov_metarem <- function(object){
   if(object$model == "tie"){
     return(VarCov)
   } else {
-    return(list(sender_rate = as.matrix(VarCovSnd),
-                receiver_choice = as.matrix(VarCovRec)))
+    return(list(sender_model = as.matrix(VarCovSnd),
+                receiver_model = as.matrix(VarCovRec)))
   }
 
 }
@@ -1117,27 +1168,27 @@ summary.metarem <- function(object, ...){
     fe <- fixef_metarem(object)
     fixed_effects <- fe$fixed_effects
     std_fe <- fe$std_error
-    samplesSnd <- abind::abind(object$sender_rate$mu, object$sender_rate$phi, along = 2)
+    samplesSnd <- object$sender_model$mu
     lowerSnd <- rowMeans(apply(samplesSnd, c(2, 3), stats::quantile, probs = c(0.025)))
     upperSnd <- rowMeans(apply(samplesSnd, c(2, 3), stats::quantile, probs = c(0.975)))
-    coefsTabSnd <- cbind("post. mean" = fixed_effects$sender_rate,
-                         "post. sd" = std_fe$sender_rate,
+    coefsTabSnd <- cbind("post. mean" = fixed_effects$sender_model,
+                         "post. sd" = std_fe$sender_model,
                          "2.5% CI" = lowerSnd,
                          "97.5% CI" = upperSnd)
     #Fixed-effects in the receiver model
-    samplesRec <- abind::abind(object$receiver_choice$mu, object$receiver_choice$psi, along = 2)
+    samplesRec <- object$receiver_model$mu
     lowerRec <- rowMeans(apply(samplesRec, c(2, 3), stats::quantile, probs = c(0.025)))
     upperRec <- rowMeans(apply(samplesRec, c(2, 3), stats::quantile, probs = c(0.975)))
-    coefsTabRec <- cbind("post. mean" = fixed_effects$receiver_choice,
-                         "post. sd" = std_fe$receiver_choice,
+    coefsTabRec <- cbind("post. mean" = fixed_effects$receiver_model,
+                         "post. sd" = std_fe$receiver_model,
                          "2.5% CI" = lowerRec,
                          "97.5% CI" = upperRec)
     summary_out$coefsTabSnd <- coefsTabSnd
     summary_out$coefsTabRec <- coefsTabRec
     if(object$random_sender | object$random_receiver){
       VarCov <- VarCov_metarem(object)
-      summary_out$VarCovSnd <- VarCov$sender_rate
-      summary_out$VarCovRec <- VarCov$receiver_choice
+      summary_out$VarCovSnd <- VarCov$sender_model
+      summary_out$VarCovRec <- VarCov$receiver_model
     }
     attr(summary_out, "model") <- "actor"
     attr(summary_out, "Niter") <- object$Niter
@@ -1216,5 +1267,315 @@ print.metarem <- function(x, ...){
 
   #If only print is called, then we call summary
   return(summary.metarem(x))
+
+}
+
+#####################################################################################
+#####################################################################################
+#####################################################################################
+
+#In this part, we have the streamrem code
+
+#####################################################################################
+#####################################################################################
+#####################################################################################
+
+#'streamrem
+#'
+#'A function to estimate relational event models on data streams.
+#'
+#'@param data This is either a list containing edgelist and statistics for the batches of the networks (see example below), or a character string containing the paths where the data is saved in the hard drive. In case the data is in HD the batches should be saved separately (in format .rds) and each should be a list with edgelist and statistics.
+#'@param actors A character vector containing the actors in the network, this should be particularly used when not every actor has been observed. See \code{?remify::remify}.
+#'@param directed If \code{TRUE} then the network is treated as directed.
+#'@param ordinal Set to \code{TRUE} in case only the order of the events is known.
+#'@param update Set to \code{TRUE} to update the estimates with new batches. You should provide a model previously fitted with the \code{streamrem} function.
+#'@param model A model previously fitted with the \code{streamrem} function.
+#'
+#'@examples
+#'
+#'#First install remulate, remstats and remify
+#'#library(devtools)
+#'#install_github("TilburgNetworkGroup/remulate")
+#'#devtools::install_github("TilburgNetworkGroup/remify")
+#'#devtools::install_github("TilburgNetworkGroup/remstats")
+#'
+#' edgelist <- stream
+#'
+#' library(remstats)
+#'
+#' names(edgelist) <- c("time", "actor1", "actor2")
+#'
+#' actors <- as.character(1:10)
+#'
+#' #We will devide the network in 10 batches of 500
+#' events <- seq(1, 5001, by = 500)
+#'
+#' #Declaring which effects we want remstats to compute
+#' effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
+#'
+#' #Getting the remify object
+#' rehObj <- remify::remify(edgelist, model = "tie", actors = actors)
+#'
+#' data <- vector("list")
+#'
+#' for(i in 2:length(events)){
+#'   #Computing statistics
+#'   stats <- remstats::tomstats(effects, rehObj, start = events[i-1], stop = events[i]-1)
+#'   edl <- edgelist[events[i-1]:(events[i]-1),]
+#'   #Every piece needs to be stored a in a list with edgelist and statistics
+#'   data[[i-1]] <- list(edgelist = edl,
+#'                       statistics = stats)
+#' }
+#
+#' #Let's compute the effects for the first 7 batches of the networks
+#' fit <- streamrem(data[1:7], actors)
+#'
+#' #printing the parameters
+#' print(fit)
+#' #Plotting a trend line of the estimates
+#' plot(fit)
+#'
+#' #Now we can update the model with the remaining 3 batches
+#' fit2 <- streamrem(data[8:10], actors, update = TRUE, model = fit)
+#'
+#' #printing the parameters
+#' print(fit2)
+#' #Plot a trend line with the estimates
+#' plot(fit2)
+#'
+#'@export
+streamrem <- function(data,
+                      actors = NULL,
+                      directed = TRUE,
+                      ordinal = FALSE,
+                      update = F,
+                      model = NULL){
+  #Storing the results
+  estimates <- vector("list")
+  #Checking whether we need to update the model
+  if(update & is.null(model)){
+    stop("update = TRUE requires a model object previously fitted with streamrem.")
+  }
+  #Number of batches
+  L <- length(data)
+
+  #Looping through the partitions
+  tt <- Sys.time()
+  for(i in 1:L){
+    #data has to be either a character vector containing the path where the data is saved
+    #or a list containing the batches, every batch has to be a list with edgelist and statistics
+    if(is.character(data)){
+      dat <- readRDS(data[i])
+    } else {
+      dat <- data[[i]]
+    }
+    #Checking if the list is names
+    if(is.null(names(dat))){
+      stop("The list must be named, containing edgelist and statistics.")
+    }
+    #Extracting the edgelist, the list has to be named
+    edgelist <- dat$edgelist
+    if(i == 1){
+      #store the time of the last event to make the subtraction
+      tempo <- edgelist[nrow(edgelist),1]
+      #Creating the matrices to store the estimates
+      p <- dim(dat$statistics)[3]
+      #Storing streaming estimates
+      beta <- matrix(NA, nrow = p, ncol = L)
+      omega <- array(NA, dim = c(p, p, L))
+      if(update){
+        edgelist[,1] <- edgelist[,1] - model$timeL
+        edgelist[,1] <- as.numeric(edgelist[,1])
+      }
+    } else {
+      #store the time of the last event to make the subtraction
+      tempo <- edgelist[nrow(edgelist),1]
+      edgelist[,1] <- edgelist[,1] - timeF
+      edgelist[,1] <- as.numeric(edgelist[,1])
+    }
+    #Extracting statistics, the list have to be named
+    stats <- dat$statistics
+    class(stats) <- c("tomstats", "remstats")
+    edgelistREH <- suppressWarnings(
+      remify::remify(edgelist, ordinal = F, actors = actors, model = "tie", directed = directed)
+    )
+
+    #class(dataList[[2]]) <- c("tomstats", "remstats")
+    print(paste("Obtaining the MLE estimates."))
+    rem <- suppressWarnings(
+      remstimate::remstimate(reh = edgelistREH,
+                             stats = stats,
+                             method = "MLE")
+    )
+    print(paste("The MLE estimates were obtained."))
+    #Changing the name of tempo, so we don't f*ck it up in the next iteration
+    timeF <- tempo
+
+    estimates[[i]] <- list(coef = rem$coefficients,
+                           var = (rem$vcov + t(rem$vcov)/2))
+
+    #Getting the regression coefficients and covariance matrices
+    if(i == 1){
+      if(update){
+        l <- dim(model$omega)[3] #last batch of the previous fit
+        omega[,,i] <- solve(solve(estimates[[i]]$var) + solve(model$omega[,,l]))
+        beta[,i] <- omega[,,i] %*% (solve(estimates[[i]]$var) %*% estimates[[i]]$coef + solve(model$omega[,,l]) %*% model$beta[,l])
+      } else {
+        omega[,,i] <- estimates[[i]]$var
+        beta[,i] <- estimates[[i]]$coef
+      }
+    } else{
+      omega[,,i] <- solve(solve(estimates[[i]]$var) + solve(omega[,,i-1]))
+      beta[,i] <- omega[,,i] %*% (solve(estimates[[i]]$var) %*% estimates[[i]]$coef + solve(omega[,,i-1]) %*% beta[,i-1])
+    }
+    print(paste("This is iteration", i, "out of", length(data)))
+  }
+  (tt2 <- Sys.time() - tt)
+  #Giving names to the estimates
+  statsnames <- dimnames(stats)[[3]]
+  if(update){
+    beta <- cbind(model$beta, beta)
+    omega <- abind::abind(model$omega, omega, along = 3)
+    colnames(beta) <- dimnames(omega)[[3]] <- paste0("batch_", 1:ncol(beta))
+  } else {
+    colnames(beta) <- dimnames(omega)[[3]] <- paste0("batch_", 1:L)
+  }
+  rownames(beta) <- statsnames
+  dimnames(omega)[[1]] <- dimnames(omega)[[2]] <- statsnames
+  #Output
+  final_list <- list(beta = beta,
+                     omega = omega,
+                     run_time = tt2,
+                     timeL = timeF)
+  #Computing intervals
+  conf_intervals <- intervals(final_list)
+  final_list$confint <- conf_intervals
+  class(final_list) <- "streamrem"
+  return(final_list)
+}
+
+
+#################################################################################
+#################################################################################
+#################################################################################
+
+#'interval
+#'
+#'@param fit A streamrem object.
+#'@param prob A probability to compute the confidence interval, default is 0.95.
+#'@export
+intervals <- function(fit,
+                      prob = 0.95){
+  #Extracting the standard errors of from the covariance matrices
+  stddev <- sapply(1:dim(fit$omega)[3], function(x) diag((fit$omega[,,x])^.5))
+  #Computing upper bounds
+  up <- fit$beta - stats::qnorm((1-prob)/2) * stddev
+  #Computing lower bounds
+  low <- fit$beta + stats::qnorm((1-prob)/2) * stddev
+  #number of covariates in the model
+  n_covs <- nrow(low)
+  covs <- rownames(low)
+  #creating the output list
+  output <- lapply(1:n_covs, function(x) data.frame(lower = low[x,], upper = up[x,]))
+  names(output) <- covs
+  return(output)
+}
+
+#################################################################################
+#################################################################################
+#################################################################################
+
+#'plot.streamrem
+#'
+#'Plots lines with the trends of each parameter estimates and 95% confidence intervals.
+#'@param x A streamrem object.
+#'@param same_page The default is FALSE. If TRUE, the function will create all graphs in one plot.
+#'@param ... further arguments to be passed to the 'summary' method
+#'@export
+plot.streamrem <- function(x, same_page = FALSE, ...){
+  if (!inherits(x, "streamrem"))
+    warning("calling streamrem(<fake-streamrem-object>) ...")
+  beta <- x$beta
+  intervals <- x$confint
+  covs <- rownames(beta)
+  if(same_page){
+    graphics::par(mfrow = c(nrow(beta)/2, 2))
+  }
+  for(i in 1:nrow(beta)){
+    xlim <- c(1, ncol(beta))
+    scl <- c(x$confint[[i]][,1],x$confint[[i]][,2])
+    ylim <- range(scl)
+    graphics::plot.new()
+    graphics::plot.window(xlim, ylim, main = covs[i])
+    graphics::lines(beta[i,])
+    graphics::lines(x$confint[[i]][,1], lty = 2)
+    graphics::lines(x$confint[[i]][,2], lty = 2)
+    graphics::axis(side = 1, at = seq(xlim[1], xlim[2]))
+    graphics::axis(side = 2, at = round(c(min(ylim), beta[i,1], max(ylim)),4))
+    graphics::box(which = "plot")
+    graphics::title(main = covs[i], ylab = "values", xlab = "batches")
+  }
+}
+
+#################################################################################
+#################################################################################
+#################################################################################
+
+#' summary.streamrem
+#' @title summary.streamrem
+#' @rdname summary.streamrem
+#' @description A function that arranges a summary of a 'streamrem' object
+#' @param object is a \code{streamrem} object
+#' @param ... further arguments to be passed to the 'summary' method
+#' @method summary streamrem
+#' @export
+summary.streamrem <- function(object, ...){
+  if (!inherits(object, "streamrem"))
+    warning("calling streamrem(<fake-streamrem-object>) ...")
+  summary_out <- vector("list")
+  summary_out$beta <- object$beta
+  summary_out$run_time <- object$run_time
+  class(summary_out) <- "summary.streamrem"
+  return(summary_out)
+}
+
+#################################################################################
+#################################################################################
+#################################################################################
+
+#' print.summary.streamrem
+#' @title print.summary.streamrem
+#' @rdname print.summary.streamrem
+#' @description A function that prints out a summary of a 'metarem' object.
+#' @param x is a \code{summary.streamrem} object
+#' @param ... further arguments to be passed to the 'print.summary' method
+#' @method print summary.streamrem
+#' @export
+print.summary.streamrem <- function(x, ...){
+  cat("Meta-analytic relational event model. \n")
+  cat("\n")
+  cat(paste("The model ran", nrow(x$beta), "covariates in total."))
+  cat("\n")
+  stats::printCoefmat(t(x$beta),3)
+  cat("\n")
+  cat(paste("The model took",  format(round(x$run_time,2), units = "secs"), "to run."))
+}
+
+#################################################################################
+#################################################################################
+#################################################################################
+
+#' print.streamrem
+#' @title print.streamrem
+#' @rdname print.streamrem
+#' @description A function that prints out a summary of a 'streamrem' object.
+#' @param x is a \code{summary.streamrem} object
+#' @param ... further arguments to be passed to the 'print.summary' method
+#' @method print streamrem
+#' @export
+print.streamrem <- function(x, ...){
+
+  #If only print is called, then we call summary
+  return(summary.streamrem(x))
 
 }

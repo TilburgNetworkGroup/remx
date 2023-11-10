@@ -40,7 +40,7 @@ stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, rehO
 
 #Running the model
 
-fit <- remx(edgelist = edgelist,
+fit <- remx(reh = rehObj,
             statistics = stats,
             random = c("baseline", "inertia", "reciprocity"))
 
@@ -62,10 +62,10 @@ sender_effects <- ~ indegreeSender(scaling = "std")
 receiver_effects <- ~ indegreeReceiver(scaling = "std") + outdegreeReceiver(scaling = "std")
 statistics <- lapply(1:length(edgelist), function(x) remstats::aomstats(rehObj[[x]], sender_effects, receiver_effects))
 
-fit <- remx(edgelist = edgelist,
-             statistics = statistics,
-             random_sender = c("baseline", "indegreeSender"),
-             random_receiver = c("indegreeReceiver", "outdegreeReceiver"))
+fit <- remx(reh = rehObj,
+            statistics = statistics,
+            random_sender = c("baseline", "indegreeSender"),
+            random_receiver = c("indegreeReceiver", "outdegreeReceiver"))
 
 print(fit)
 

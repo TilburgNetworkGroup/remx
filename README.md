@@ -97,7 +97,7 @@ VarCov_metarem(fit)
 
 In this case, we have a relational-event network that is augmented with additional events over time. Every new batch of events will be used to update the model estimates. 
 
-### Computing network statistics
+## Computing network statistics
 
 We need to use the arguments **start** and **stop** from **remstats** in order to compute the statistics for a specific portion of the event sequence. For instance, if we wish to fit the model in batches of 500, we need to declare **start** = 1 and **stop** = 500, then **start** = 501 and **stop** = 1000, and so on.
 
@@ -133,7 +133,7 @@ for(i in 2:length(events)){
 }
 ```
 
-### Fitting the model
+## Fitting the model
 
 ```r{}
 #Let's compute the effects for the first 7 batches of the networks
@@ -145,13 +145,15 @@ print(fit)
 
 The package also contains a generic plot function, that can be used to plot the trends, along with 95\% intervals, of the estimated effects across each batch. This function only works for models fitted with the function **strem**.
 
+## Plotting trends of the estimates across batches
+
 ```r{}
 #Getting a plot of the estimates with confidence intervals
 plot(fit)
 
 ```
 
-### Updating the model with new batches of events
+## Updating the model with new batches of events
 
 We can update our estimates with new batches by simply passing a model previously fitted with the **strem** function to the argument **model** and use the argument **update** = TRUE.
 

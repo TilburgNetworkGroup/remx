@@ -656,8 +656,13 @@ Rcpp::List sampler(const int Niter,
    arma::cube sigmaCube(p, p, Niter); //Stores covariance matrix in each slice
    arma::vec rndMean(p);
    arma::vec fixEff(q);
-   arma::mat psiAdj = fixed_effect * psi_hat;
-
+   arma::mat psiAdj;
+   if(randomModel){
+     psiAdj = fixed_effect * psi_hat;
+   } else {
+     psiAdj = psi_hat;
+   }
+   
    for(int j = 0; j < Niter; ++j){
      if(randomModel){
        if(j == 0){ //using initial values
@@ -875,7 +880,12 @@ Rcpp::List samplerActor(const int Niter,
 
    arma::vec rndMeanRec(p);
    arma::vec fixEffRec(q);
-   arma::mat psiAdj = fixed_effect_rec * psi_hat;
+   arma::mat psiAdj;
+   if(randomModelRec){
+     psiAdj = fixed_effect_rec * psi_hat;
+   } else {
+     psiAdj = psi_hat;
+   }
 
    //SENDER MODEL
    arma::mat gammaSample(p, K); //this an intermediate list to store the output of the posterior for the group-specific effects
@@ -886,7 +896,12 @@ Rcpp::List samplerActor(const int Niter,
 
    arma::vec rndMeanSnd(p);
    arma::vec fixEffSnd(q);
-   arma::mat phiAdj = fixed_effect_snd * phi_hat;
+   arma::mat phiAdj;
+   if(randomModelSnd){
+     phiAdj = fixed_effect_snd * phi_hat;
+   } else {
+     phiAdj = phi_hat;
+   }
 
    for(int j = 0; j < Niter; ++j){
 
@@ -1010,7 +1025,7 @@ Rcpp::List samplerActor(const int Niter,
                             Rcpp::Named("sigma") = zetaOut,
                             Rcpp::Named("alpha") = lambdaGOut);
   } else {
-     S1 = Rcpp::List::create(Rcpp::Named("phi") = muGOut);
+     S1 = Rcpp::List::create(Rcpp::Named("mu") = muGOut);
   }
  //Receiver model contains fixed effects
  if(randomModelRec){ //model contains
@@ -1019,7 +1034,7 @@ Rcpp::List samplerActor(const int Niter,
                             Rcpp::Named("sigma") = sigmaOut, //random-effect covariance matrix
                             Rcpp::Named("alpha") = lambdaBOut); //mixture variable of cov-matrix prior
   } else {
-    S2 = Rcpp::List::create(Rcpp::Named("psi") = muBOut);
+    S2 = Rcpp::List::create(Rcpp::Named("mu") = muBOut);
   }
  return(Rcpp::List::create(Rcpp::Named("sender_model") = S1,
                            Rcpp::Named("receiver_model") = S2));

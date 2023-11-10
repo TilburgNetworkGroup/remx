@@ -51,10 +51,7 @@ Imports:
     remify (>= 2.0.0),
     remstimate (>= 2.0.0),
     remstats,
-    lme4,
-    rstanarm,
     stats,
-    utils,
     abind,
     mvtnorm
 LinkingTo:

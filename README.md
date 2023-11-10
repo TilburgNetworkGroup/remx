@@ -1,13 +1,14 @@
 # remx
-A package for mixed-effects relational event models and relational-event data streams. 
+A package with meta-analytic approximations for relational event models. 
 
-This package fits meta-analytic approximations of mixed-effect relational event models and data streams. Full multilevel models are also support from **lme4** (frequentist) and **rstanarm** (Bayesian) packages. 
+This package supports mixed-effects models, data streams and large networks. 
 
 # Installation 
 ```r{}
 install.packages("devtools")
 devtools::install_github("TilburgNetworkGroup/remify") 
 devtools::install_github("TilburgNetworkGroup/remstimate")
+devtools::install_github("TilburgNetworkGroup/remstats")
 devtools::install_github("TilburgNetworkGroup/remx")
 ```
 
@@ -29,9 +30,6 @@ library(remstats)
 
 #Loading the data
 edgelist <- networks
-for(i in 1:length(edgelist)){names(edgelist[[i]]) <- c("time", "actor1", "actor2")}
-
-actors <- lapply(1:length(edgelist), function(x) as.character(1:10))
 
 #Computing statistics
 effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
@@ -77,7 +75,7 @@ print(fit)
 
 ## Extracting model parameters
 
-These functions are inspired by the functions contained in the **lme4** package. The can be used to extract the parameters for models fitted using the **remx** function. They can only be used with **method** = "meta".
+These functions are inspired by the functions contained in the **lme4** package. The can be used to extract the parameters for models fitted using the **remx** function. They can only be used with \code{method = "meta"}.
 
 ### Random effects
 
@@ -97,23 +95,16 @@ fixef_metarem(fit)
 VarCov_metarem(fit)
 ```
 
-# Relational-event network data streams
+# Relational-event Network Data Streams
 
-In this case, we have a relational-event network that is augmented with additional events over time. Every new batch of events will be used to update the model estimates. 
-
-## Computing network statistics
-
-We need to use the arguments **start** and **stop** from **remstats** in order to compute the statistics for an specific portion of the event sequence. For instance, if we wish to fit the model in batches of 500, we need to declare **start** = 1 and **stop** = 500, then **start** = 501 and **stop** = 1000 and so on.
+In this case, we have a relational-event network that is augmented with additional events over time. Every new batch of events will be used to update the model estimates. We need to use the arguments **start** and **stop** from **remstats** in order to compute the statistics for an specific portion of the event sequence. For instance, if we wish to fit the model in batches of 500, we need to declare **start** = 1 and **stop** = 500, then **start** = 501 and **stop** = 1000 and so on.
 
 ```r{}
 
+#Now let's simulate a network
 edgelist <- stream
 
 library(remstats)
-
-names(edgelist) <- c("time", "actor1", "actor2")
-
-actors <- as.character(1:10)
 
 #We will devide the network in 10 batches of 500
 events <- seq(1, 5001, by = 500)
@@ -135,24 +126,19 @@ for(i in 2:length(events)){
   edl <- edgelist[events[i-1]:(events[i]-1),]
   #Every piece needs to be stored a in a list with edgelist and statistics
   data[[i-1]] <- list(edgelist = edl,
+                      reh = remify::remify(edl, model = "tie", actors = stream$actors),
                       statistics = stats)
 }
 
-```
-
-## Fitting the model
-
-Then we need to use the function **streamrem** to fit the model. The **data** argument can be either a list of named lists, where each of which contains the piece of the network under the name **edgelist** and the array of statistics under the name **statistics**. Or it can be a character string of paths from which the **streamrem** function will open the data, in case the data is saved in the hard drive. In this case, every piece should be saved separately, so the function will open one at a time. These files should be saved in RDS format. They should be named lists containing **edgelist** and **statistics**.
-
-```r{}
 #Let's compute the effects for the first 7 batches of the networks
-fit <- streamrem(data[1:7], actors)
+fit <- strem(data[1:7])
 
 #printing the parameters
 print(fit)
+
 ```
 
-The package also contains a generic plot function, that can be used to plot the trends, along with 95\% intervals, of the estimates effects across each batch. This function only works for models fitted with the function **streamrem**.
+The package also contains a generic plot function, that can be used to plot the trends, along with 95\% intervals, of the estimates effects across each batch. This function only works for models fitted with the function **strem**.
 
 ```r{}
 #Getting a plot of the estimates with confidence intervals
@@ -160,12 +146,14 @@ plot(fit)
 
 ```
 
-We can update our estimates with new batches by simply passing a model previously fitted with the **streamrem** function to the argument **model** and use the argument **update** = TRUE.
+We can update our estimates with new batches by simply passing a model previously fitted with the **strem** function to the argument **model** and use the argument **update** = TRUE.
 
 ```r{}
 #Now we can update the model with the remaining 3 batches
-fit <- streamrem(data[8:10], actors, update = T, model = fit)
+fit <- strem(data[8:10], update = T, model = fit)
 
 #printing the parameters
 print(fit)
 ```
+
+

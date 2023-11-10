@@ -5,20 +5,17 @@
 \title{hrem}
 \usage{
 hrem(
-  edgelist,
+  reh,
   statistics,
   random = NULL,
   Niter = 10000,
   Nchain = 2,
   NburnIn = 5000,
-  Nthin = 10,
-  actors = NULL,
-  ordinal = FALSE,
-  directed = TRUE
+  Nthin = 10
 )
 }
 \arguments{
-\item{edgelist}{a list containing multiple relational event sequences}
+\item{reh}{a list containing multiple relational event sequences pre-processed by the \code{remify} function.}
 
 \item{statistics}{a list containing multiple \code{remstats} objects}
 
@@ -31,12 +28,6 @@ hrem(
 \item{NburnIn}{number of samples to be discarded.The default is \code{NburnIn = 5000}.}
 
 \item{Nthin}{number of samples to discarded in between every sample kept.The default is \code{NburnIn = 10}.}
-
-\item{actors}{a list containing the names of the actors in every network, should be the same lenght as \code{edgelist} and \code{statistics}.}
-
-\item{ordinal}{logical value indicating whether the timestamps of the events are know. The default is \code{ordinal = FALSE}. If \code{ordinal = TRUE}, that means that only the order of the events is known.}
-
-\item{directed}{logical value indicating whether the model is for directed network. The default is \code{directed = TRUE}.}
 }
 \value{
 A list containing the output of the Gibbs sampler for this model.

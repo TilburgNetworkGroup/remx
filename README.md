@@ -33,7 +33,7 @@ edgelist <- networks
 
 #Computing statistics
 effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
-rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie", actors = actors[[x]]))
+rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie"))
 stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, rehObj[[x]]))
 
 #Running the model
@@ -57,7 +57,7 @@ print(fit)
 #----------------------------#
 
 #Computing statistics
-rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "actor", actors = actors[[x]]))
+rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "actor"))
 sender_effects <- ~ indegreeSender(scaling = "std")
 receiver_effects <- ~ indegreeReceiver(scaling = "std") + outdegreeReceiver(scaling = "std")
 statistics <- lapply(1:length(edgelist), function(x) remstats::aomstats(rehObj[[x]], sender_effects, receiver_effects))

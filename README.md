@@ -75,7 +75,7 @@ print(fit)
 
 ## Extracting model parameters
 
-These functions are inspired by the functions contained in the **lme4** package. The can be used to extract the parameters for models fitted using the **remx** function. They can only be used with \code{method = "meta"}.
+These functions are inspired by the functions contained in the **lme4** package. The can be used to extract the parameters for models fitted using the **remx** function.
 
 ### Random effects
 

@@ -1,7 +1,7 @@
 # remx
 A package with meta-analytic approximations for relational event models. 
 
-This package supports mixed-effects models, data streams and large networks. 
+This package supports mixed-effects models, data streams, and large networks. 
 
 # Installation 
 ```r{}
@@ -95,7 +95,11 @@ VarCov_metarem(fit)
 
 # Relational-event Network Data Streams
 
-In this case, we have a relational-event network that is augmented with additional events over time. Every new batch of events will be used to update the model estimates. We need to use the arguments **start** and **stop** from **remstats** in order to compute the statistics for an specific portion of the event sequence. For instance, if we wish to fit the model in batches of 500, we need to declare **start** = 1 and **stop** = 500, then **start** = 501 and **stop** = 1000 and so on.
+In this case, we have a relational-event network that is augmented with additional events over time. Every new batch of events will be used to update the model estimates. 
+
+# Computing network statistics
+
+We need to use the arguments **start** and **stop** from **remstats** in order to compute the statistics for a specific portion of the event sequence. For instance, if we wish to fit the model in batches of 500, we need to declare **start** = 1 and **stop** = 500, then **start** = 501 and **stop** = 1000, and so on.
 
 ```r{}
 
@@ -127,16 +131,19 @@ for(i in 2:length(events)){
                       reh = remify::remify(edl, model = "tie", actors = stream$actors),
                       statistics = stats)
 }
+```
 
+# Fitting the model
+
+```r{}
 #Let's compute the effects for the first 7 batches of the networks
 fit <- strem(data[1:7])
 
 #printing the parameters
 print(fit)
-
 ```
 
-The package also contains a generic plot function, that can be used to plot the trends, along with 95\% intervals, of the estimates effects across each batch. This function only works for models fitted with the function **strem**.
+The package also contains a generic plot function, that can be used to plot the trends, along with 95\% intervals, of the estimated effects across each batch. This function only works for models fitted with the function **strem**.
 
 ```r{}
 #Getting a plot of the estimates with confidence intervals

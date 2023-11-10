@@ -143,9 +143,9 @@ fit <- strem(data[1:7])
 print(fit)
 ```
 
-The package also contains a generic plot function, that can be used to plot the trends, along with 95\% intervals, of the estimated effects across each batch. This function only works for models fitted with the function **strem**.
-
 ## Plotting trends of the estimates across batches
+
+The package also contains a generic plot function, that can be used to plot the trends, along with 95\% intervals, of the estimated effects across each batch. This function only works for models fitted with the function **strem**.
 
 ```r{}
 #Getting a plot of the estimates with confidence intervals

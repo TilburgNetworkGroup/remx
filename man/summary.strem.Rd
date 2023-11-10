@@ -9,6 +9,7 @@
 \arguments{
 \item{object}{is a \code{strem} object}
 
+
 \item{...}{further arguments to be passed to the 'summary' method}
 }
 \description{

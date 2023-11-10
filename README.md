@@ -16,6 +16,8 @@ devtools::install_github("TilburgNetworkGroup/remx")
 
 In this case, there are multiple independent networks that need to be analized using a multilevel model.
 
+The **remx** function is the main function of the package. It fits all multilevel models available.
+
 ### Tie-oriented Model
 
 ```r{}

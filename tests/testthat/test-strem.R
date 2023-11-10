@@ -3,7 +3,9 @@ library(remstats)
 library(testthat)
 
 test_that("Testing the data streaming meta analytic approximation",{
+
   edgelist <- stream$edgelist
+
   #We will devide the network in 10 batches of 500
   events <- seq(1, 5001, by = 500)
   #Declaring which effects we want remstats to compute
@@ -12,7 +14,9 @@ test_that("Testing the data streaming meta analytic approximation",{
     remstats::indegreeSender(scaling = "std") +
     remstats::outdegreeSender(scaling = "std")
   #Getting the remify object
+
   rehObj <- remify::remify(edgelist, model = "tie")
+
   data <- vector("list")
   for(i in 2:length(events)){
     #Computing statistics
@@ -29,3 +33,4 @@ test_that("Testing the data streaming meta analytic approximation",{
   )
 }
 )
+

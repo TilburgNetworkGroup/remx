@@ -40,6 +40,7 @@ events <- seq(1, 5001, by = 500)
 #Declaring which effects we want remstats to compute
 effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
 
+
 #Getting the remify object for the entire sequence
 rehObj <- remify::remify(edgelist, model = "tie")
 
@@ -64,7 +65,9 @@ print(fit)
 plot(fit)
 
 #Now we can update the model with the remaining 3 batches
+
 fit2 <- strem(data[8:10], update = TRUE, model = fit)
+
 
 #printing the parameters
 print(fit2)

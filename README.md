@@ -102,7 +102,7 @@ In this case, we have a relational-event network that is augmented with addition
 ```r{}
 
 #Now let's simulate a network
-edgelist <- stream
+edgelist <- stream$edgelist
 
 library(remstats)
 
@@ -116,7 +116,7 @@ effects <- ~ remstats::inertia(scaling = "std") +
   remstats::outdegreeSender(scaling = "std")
 
 #Getting the remify object
-rehObj <- remify::remify(edgelist, model = "tie", actors = actors)
+rehObj <- remify::remify(edgelist, model = "tie", actors = stream$actors)
 
 data <- vector("list")
 

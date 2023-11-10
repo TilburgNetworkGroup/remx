@@ -5,21 +5,18 @@
 \title{hremActor}
 \usage{
 hremActor(
-  edgelist,
+  reh,
   statistics,
   Niter = 10000,
   Nchain = 2,
   NburnIn = 5000,
   Nthin = 10,
   random_sender = NULL,
-  random_receiver = NULL,
-  actors = NULL,
-  ordinal = FALSE,
-  directed = TRUE
+  random_receiver = NULL
 )
 }
 \arguments{
-\item{edgelist}{a list containing multiple relational event sequences}
+\item{reh}{a list containing multiple relational event sequences pre-processed by the \code{remify} function.}
 
 \item{statistics}{a list containing multiple \code{remstats} objects}
 
@@ -34,12 +31,6 @@ hremActor(
 \item{random_sender}{a vector containing the names of the covariates that will be treated as random effects in the sender model.}
 
 \item{random_receiver}{a vector containing the names of the covariates that will be treated as random effects in the receiver model.}
-
-\item{actors}{a list containing the names of the actors in every network, should be the same lenght as \code{edgelist} and \code{statistics}.}
-
-\item{ordinal}{logical value indicating whether the timestamps of the events are know. The default is \code{ordinal = FALSE}. If \code{ordinal = TRUE}, that means that only the order of the events is known.}
-
-\item{directed}{logical value indicating whether the model is for directed network. The default is \code{directed = TRUE}.}
 }
 \value{
 A list containing the output of the Gibbs sampler for this model.

@@ -5,130 +5,81 @@
 \title{remx}
 \usage{
 remx(
-  edgelist,
+  reh,
   statistics,
   random = NULL,
-  fixed = NULL,
   random_sender = NULL,
   random_receiver = NULL,
-  intercept = TRUE,
-  directed = TRUE,
-  ordinal = FALSE,
-  method = c("meta", "classic", "bayes"),
-  model = c("tie", "actor"),
   Niter = 10000,
   Nchain = 2,
   NburnIn = 5000,
-  Nthin = 10,
-  actors = NULL,
-  ...
+  Nthin = 10
 )
 }
 \arguments{
-\item{edgelist}{a list containing multiple relational event sequences}
+\item{reh}{a list containing multiple relational event sequences processed by the remify function}
 
 \item{statistics}{a list containing multiple \code{remstats} objects}
 
 \item{random}{a vector containing the names of the covariates that will be treated as random effects, use it for \code{model = "tie"}. If \code{random = NULL} all covariates will be treated as fixed-effects.}
 
-\item{fixed}{a character vector containing the names of the covariables that will be treated as fixed. Only use this when \code{method = "classic"} or \code{method = "bayes"}.}
-
 \item{random_sender}{a vector containing the names of the covariates that will be treated as random effects in the sender model, use it for \code{model = "actor"}. If \code{random_sender = NULL} all covariates in the sender model will be treated as fixed-effects.}
 
 \item{random_receiver}{a vector containing the names of the covariates that will be treated as random effects in the receiver model, use it for \code{model = "actor"}. If \code{random_receiver = NULL} all covariates in the receiver model will be treated as fixed-effects.}
 
-\item{intercept}{logical value indicating whether an intercept will be included in the model. The default is \code{intercept = TRUE}.}
+\item{Niter}{number of iterations of the Gibbs sampler. The default is \code{Niter = 100000}.}
 
-\item{directed}{logical value indicating whether the model is for directed network. The default is \code{directed = TRUE}.}
+\item{Nchain}{number of chains of the Gibbs sampler.The default is \code{Nchain = 2}.}
 
-\item{ordinal}{logical value indicating whether the timestamps of the events are know. The default is \code{ordinal = FALSE}. If \code{ordinal = TRUE}, that means that only the order of the events is known.}
+\item{NburnIn}{number of samples to be discarded.The default is \code{NburnIn = 5000}.}
 
-\item{method}{the estimation method to be used. Choose \code{method = "meta"} for meta-analytic approximations, \code{method - "classic"} for frequentist and \code{method = "bayes"} for Bayesian.}
-
-\item{model}{the type of model. Choose \code{model = "tie"} for tie oriented model and \code{model = "actor"} for the DyNaM.}
-
-\item{Niter}{number of iterations of the Gibbs sampler. The default is \code{Niter = 100000}. This parameter is only used for \code{method = "meta"}.}
-
-\item{Nchain}{number of chains of the Gibbs sampler.The default is \code{Nchain = 2}. This parameter is only used for \code{method = "meta"}.}
-
-\item{NburnIn}{number of samples to be discarded.The default is \code{NburnIn = 5000}. This parameter is only used for \code{method = "meta"}.}
-
-\item{Nthin}{number of samples to discarded in between every sample kept.The default is \code{NburnIn = 10}. This parameter is only used for \code{method = "meta"}.}
-
-\item{actors}{a list containing the names of the actors in every network, should be the same lenght as \code{edgelist} and \code{statistics}}
-
-\item{...}{additional parameters. See the help of \code{lme4} for \code{method = "classic"} and \code{rstanarm} for \code{method = "bayes"}.}
+\item{Nthin}{number of samples to discarded in between every sample kept.The default is \code{NburnIn = 10}.}
 }
 \value{
-for \code{method = "meta"} returns a metarem S3 object
+Returns a \code{metarem} S3 object
 
 For tie-oriented model:
 
-\code{delta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
-
-\code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
-
-\code{sigma} random-effect covariance matrix
-
-\code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-
-\code{omega} scale-mixture parameter that allows beta to have a student T likelihood
-
-\code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
-
-\code{random} If \code{TRUE}, that means the model contain random effects
-
-\code{Niter} Number of iterations ran in the MCMC
-
-\code{NburnIn} Number of samples discarded at the beginning of each chain
-
-\code{Nchain} Number of chains
-
-\code{Nthin} number of samples discarded in between each remaining sample
-
-\code{run_time} model run time
+\itemize{
+\item \code{delta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
+\item \code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
+\item \code{sigma} random-effect covariance matrix
+\item \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
+\item \code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
+\item \code{random} If \code{TRUE}, that means the model contain random effects
+\item \code{Niter} Number of iterations ran in the MCMC
+\item \code{NburnIn} Number of samples discarded at the beginning of each chain
+\item \code{Nchain} Number of chains
+\item \code{Nthin} number of samples discarded in between each remaining sample
+\item \code{run_time} model run time
+}
 
 For actor-oriented model:
 
+\itemize{
+\item \itemize{
 Inside the sender_model list:
-
-\code{gamma} a list containing random effects in the sender model. Each array has dimensions samples, effects and networks
-
-\code{mu} fixed- and random-effect means, the array has dimensions samples, effects and chains
-
-\code{sigma} random-effect covariance matrix
-
-\code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-
-\code{omega} scale-mixture parameter that allows beta to have a student T likelihood
-
+\item \code{gamma} a list containing random effects in the sender model. Each array has dimensions samples, effects and networks
+\item \code{mu} fixed- and random-effect means, the array has dimensions samples, effects and chains
+\item \code{sigma} random-effect covariance matrix
+\item \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
+}
+\item \itemize{
 In the receiver_model list:
-
-\code{beta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
-
-\code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
-
-\code{sigma} random-effect covariance matrix
-
-\code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-
-\code{omega} scale-mixture parameter that allows beta to have a student T likelihood
-
-\code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
-
-\code{random_sender} If \code{TRUE}, that means the sender model contain random effects
-
-\code{random_receiver} If \code{TRUE}, that means the receiver model contain random effects
-
-\code{Niter} Number of iterations ran in the MCMC
-
-\code{NburnIn} Number of samples discarded at the beginning of each chain
-
-\code{Nchain} Number of chains
-
-\code{Nthin} number of samples discarded in between each remaining sample
-
-\code{run_time} model run time
+\item \code{beta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
+\item \code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
+\item \code{sigma} random-effect covariance matrix
+\item \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
+}
+\item \code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
+\item \code{random_sender} If \code{TRUE}, that means the sender model contain random effects
+\item \code{random_receiver} If \code{TRUE}, that means the receiver model contain random effects
+\item \code{Niter} Number of iterations ran in the MCMC
+\item \code{NburnIn} Number of samples discarded at the beginning of each chain
+\item \code{Nchain} Number of chains
+\item \code{Nthin} number of samples discarded in between each remaining sample
+\item \code{run_time} model run time
+}
 }
 \description{
 A function to fit mixed-effect relational event models. It runs meta-analytic approximations for actor- and tie-oriented relational event models. This function also supports full multilevel models from \code{lme4} and \code{rstanarm}.
@@ -144,8 +95,6 @@ library(remstats)
 
 #Loading the data
 edgelist <- networks
-for(i in 1:length(edgelist)){names(edgelist[[i]]) <- c("time", "actor1", "actor2")}
-
 #Computing statistics
 effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
 rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie"))
@@ -153,11 +102,9 @@ stats <- lapply(1:length(edgelist), function(x) remstats::tomstats(effects, rehO
 
 #Running the model
 
-fit <- remx(edgelist = edgelist,
+fit <- remx(reh = rehObj,
            statistics = stats,
-           random = c("baseline", "inertia"),
-           method = "meta",
-           model = "tie")
+           random = c("baseline", "inertia"))
 
 print(fit)
 
@@ -173,12 +120,10 @@ stats <- lapply(1:length(edgelist), function(x) remstats::aomstats(rehObj[[x]],
 sender_effects, receiver_effects))
 
 #Running the model
-fit <- remx(edgelist = edgelist,
+fit <- remx(reh = rehObj,
             statistics = stats,
             random_sender = c("baseline", "outdegreeSender", "indegreeSender"),
-            random_receiver = c("indegreeReceiver", "rrankSend"),
-            method = "meta",
-            model = "actor")
+            random_receiver = c("indegreeReceiver", "rrankSend"))
 
 print(fit)
 

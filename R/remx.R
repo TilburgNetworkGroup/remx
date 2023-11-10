@@ -2,60 +2,57 @@
 #'
 #' A function to fit mixed-effect relational event models. It runs meta-analytic approximations for actor- and tie-oriented relational event models. This function also supports full multilevel models from \code{lme4} and \code{rstanarm}.
 #'
-#' @param edgelist a list containing multiple relational event sequences
+#' @param reh a list containing multiple relational event sequences processed by the remify function
 #' @param statistics a list containing multiple \code{remstats} objects
 #' @param random a vector containing the names of the covariates that will be treated as random effects, use it for \code{model = "tie"}. If \code{random = NULL} all covariates will be treated as fixed-effects.
 #' @param random_sender a vector containing the names of the covariates that will be treated as random effects in the sender model, use it for \code{model = "actor"}. If \code{random_sender = NULL} all covariates in the sender model will be treated as fixed-effects.
 #' @param random_receiver a vector containing the names of the covariates that will be treated as random effects in the receiver model, use it for \code{model = "actor"}. If \code{random_receiver = NULL} all covariates in the receiver model will be treated as fixed-effects.
-#' @param fixed a character vector containing the names of the covariables that will be treated as fixed. Only use this when \code{method = "classic"} or \code{method = "bayes"}.
-#' @param intercept logical value indicating whether an intercept will be included in the model. The default is \code{intercept = TRUE}.
-#' @param directed logical value indicating whether the model is for directed network. The default is \code{directed = TRUE}.
-#' @param ordinal logical value indicating whether the timestamps of the events are know. The default is \code{ordinal = FALSE}. If \code{ordinal = TRUE}, that means that only the order of the events is known.
-#' @param method the estimation method to be used. Choose \code{method = "meta"} for meta-analytic approximations, \code{method - "classic"} for frequentist and \code{method = "bayes"} for Bayesian.
-#' @param model the type of model. Choose \code{model = "tie"} for tie oriented model and \code{model = "actor"} for the DyNaM.
-#' @param Niter number of iterations of the Gibbs sampler. The default is \code{Niter = 100000}. This parameter is only used for \code{method = "meta"}.
-#' @param Nchain number of chains of the Gibbs sampler.The default is \code{Nchain = 2}. This parameter is only used for \code{method = "meta"}.
-#' @param NburnIn number of samples to be discarded.The default is \code{NburnIn = 5000}. This parameter is only used for \code{method = "meta"}.
-#' @param Nthin number of samples to discarded in between every sample kept.The default is \code{NburnIn = 10}. This parameter is only used for \code{method = "meta"}.
-#' @param actors a list containing the names of the actors in every network, should be the same lenght as \code{edgelist} and \code{statistics}
-#' @param ... additional parameters. See the help of \code{lme4} for \code{method = "classic"} and \code{rstanarm} for \code{method = "bayes"}.
+#' @param Niter number of iterations of the Gibbs sampler. The default is \code{Niter = 100000}.
+#' @param Nchain number of chains of the Gibbs sampler.The default is \code{Nchain = 2}. 
+#' @param NburnIn number of samples to be discarded.The default is \code{NburnIn = 5000}.
+#' @param Nthin number of samples to discarded in between every sample kept.The default is \code{NburnIn = 10}.
 #'
-#' @return  for \code{method = "meta"} returns a metarem S3 object
+#' @return Returns a \code{metarem} S3 object
 #' @return For tie-oriented model:
-#' @return \code{delta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
-#' @return \code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
-#' @return \code{sigma} random-effect covariance matrix
-#' @return \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-#' @return \code{omega} scale-mixture parameter that allows beta to have a student T likelihood
-#' @return \code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
-#' @return \code{random} If \code{TRUE}, that means the model contain random effects
-#' @return \code{Niter} Number of iterations ran in the MCMC
-#' @return \code{NburnIn} Number of samples discarded at the beginning of each chain
-#' @return \code{Nchain} Number of chains
-#' @return \code{Nthin} number of samples discarded in between each remaining sample
-#' @return \code{run_time} model run time
+#' @return \itemize{
+#' \item \code{delta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
+#' \item \code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
+#' \item \code{sigma} random-effect covariance matrix
+#' \item \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
+#' \item \code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
+#' \item \code{random} If \code{TRUE}, that means the model contain random effects
+#' \item \code{Niter} Number of iterations ran in the MCMC
+#' \item \code{NburnIn} Number of samples discarded at the beginning of each chain
+#' \item \code{Nchain} Number of chains
+#' \item \code{Nthin} number of samples discarded in between each remaining sample
+#' \item \code{run_time} model run time
+#' }
 #'
 #' @return For actor-oriented model:
-#' @return Inside the sender_model list:
-#' @return \code{gamma} a list containing random effects in the sender model. Each array has dimensions samples, effects and networks
-#' @return \code{mu} fixed- and random-effect means, the array has dimensions samples, effects and chains
-#' @return \code{sigma} random-effect covariance matrix
-#' @return \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-#' @return \code{omega} scale-mixture parameter that allows beta to have a student T likelihood
-#' @return In the receiver_model list:
-#' @return \code{beta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
-#' @return \code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
-#' @return \code{sigma} random-effect covariance matrix
-#' @return \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
-#' @return \code{omega} scale-mixture parameter that allows beta to have a student T likelihood
-#' @return \code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
-#' @return \code{random_sender} If \code{TRUE}, that means the sender model contain random effects
-#' @return \code{random_receiver} If \code{TRUE}, that means the receiver model contain random effects
-#' @return \code{Niter} Number of iterations ran in the MCMC
-#' @return \code{NburnIn} Number of samples discarded at the beginning of each chain
-#' @return \code{Nchain} Number of chains
-#' @return \code{Nthin} number of samples discarded in between each remaining sample
-#' @return \code{run_time} model run time
+#' @return \itemize{
+#' \item \itemize{
+#' Inside the sender_model list:
+#' \item \code{gamma} a list containing random effects in the sender model. Each array has dimensions samples, effects and networks
+#' \item \code{mu} fixed- and random-effect means, the array has dimensions samples, effects and chains
+#' \item \code{sigma} random-effect covariance matrix
+#' \item \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
+#' }
+#' \item \itemize{
+#' In the receiver_model list:
+#' \item \code{beta} a list containing arrays of random effects. Each element is a array with dimensions corresponding to samples, effects, and networks, respectively
+#' \item \code{mu} fixed- and random-effect means, an array with dimensions corresponding to samples, effects and chains
+#' \item \code{sigma} random-effect covariance matrix
+#' \item \code{alpha} mixture parameter that allows \code{sigma} to have a half-T prior
+#' }
+#' \item \code{MLE} A list containing the MLE estimates and their respective covariance matrices for each network
+#' \item \code{random_sender} If \code{TRUE}, that means the sender model contain random effects
+#' \item \code{random_receiver} If \code{TRUE}, that means the receiver model contain random effects
+#' \item \code{Niter} Number of iterations ran in the MCMC
+#' \item \code{NburnIn} Number of samples discarded at the beginning of each chain
+#' \item \code{Nchain} Number of chains
+#' \item \code{Nthin} number of samples discarded in between each remaining sample
+#' \item \code{run_time} model run time
+#' }
 #'
 #' @examples
 #' #----------------------------#
@@ -68,8 +65,6 @@
 #'
 #' #Loading the data
 #' edgelist <- networks
-#' for(i in 1:length(edgelist)){names(edgelist[[i]]) <- c("time", "actor1", "actor2")}
-#'
 #' #Computing statistics
 #' effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
 #' rehObj <- lapply(1:length(edgelist), function(x) remify::remify(edgelist[[x]], model = "tie"))
@@ -77,11 +72,9 @@
 #'
 #' #Running the model
 #'
-#'fit <- remx(edgelist = edgelist,
+#'fit <- remx(reh = rehObj,
 #'            statistics = stats,
-#'            random = c("baseline", "inertia"),
-#'            method = "meta",
-#'            model = "tie")
+#'            random = c("baseline", "inertia"))
 #'
 #' print(fit)
 #'
@@ -97,157 +90,87 @@
 #' sender_effects, receiver_effects))
 #'
 #' #Running the model
-#' fit <- remx(edgelist = edgelist,
+#' fit <- remx(reh = rehObj,
 #'             statistics = stats,
 #'             random_sender = c("baseline", "outdegreeSender", "indegreeSender"),
-#'             random_receiver = c("indegreeReceiver", "rrankSend"),
-#'             method = "meta",
-#'             model = "actor")
+#'             random_receiver = c("indegreeReceiver", "rrankSend"))
 #'
 #' print(fit)
 #'
 #' @export
-remx <- function(edgelist,
+remx <- function(reh,
                  statistics,
                  random = NULL,
-                 fixed = NULL,
                  random_sender = NULL,
                  random_receiver = NULL,
-                 intercept = TRUE,
-                 directed = TRUE,
-                 ordinal = FALSE,
-                 method = c("meta", "classic", "bayes"),
-                 model = c("tie", "actor"),
                  Niter = 10000,
                  Nchain = 2,
                  NburnIn = 5000,
-                 Nthin = 10,
-                 actors = NULL, ...){
+                 Nthin = 10){
   #Running a few test to check some important arguments
-  if(!is.list(edgelist)){
-    stop("The edgelist argument should be a list containing multiple relational event sequences.")
+  if(!is.list(reh)){
+    stop("The reh argument should be a list containing multiple relational event sequences.")
   } else {
-    if(length(edgelist) == 1){
+    if(length(reh) == 1){
       stop("The argument edgelist should be a list containing multiple relational event sequences. Try remstimate::remstimate() instead.")
     }
+  }
+  if(sum(sapply(reh, class) != "remify") > 0){
+    stop("All objects provided to reh parameter must be of class 'remify'.")
   }
   if(!is.list(statistics)){
     stop("The statistics argument should be a list containing multiple remstats objects.")
   } else{
-    if(length(edgelist) != length(statistics)){
-     stop("edgelist and statistics must have the same length!")
+    model <- lapply(1:length(reh), function(x) attr(reh[[x]], "model"))
+    if(!do.call("all.equal", model)){
+      stop("All remify objects must have the same model type. It is either 'tie' or 'actor', all relational event sequences must be pre processed the same way.")
+    }
+    if(length(reh) != length(statistics)){
+     stop("reh and statistics must have the same length!")
     }
     if(sum(sapply(statistics, function(x) class(x)[2]) == "remstats") != length(statistics)){
       stop("statistics must be a list containing remstats objects.")
     }
-    if((model == "actor") & (sum(sapply(statistics, function(x) class(x)[1]) == "aomstats") != length(statistics))){
+    if((model[[1]] == "actor") & (sum(sapply(statistics, function(x) class(x)[1]) == "aomstats") != length(statistics))){
       stop("For model = 'actor' all arrays should be of class aomstats")
     }
-    if((model == "tie") & (sum(sapply(statistics, function(x) class(x)[1]) == "tomstats") != length(statistics))){
+    if((model[[1]] == "tie") & (sum(sapply(statistics, function(x) class(x)[1]) == "tomstats") != length(statistics))){
       stop("For model = 'tie' all arrays should be of class tomstats")
     }
-  }
-  if(model == "actor" & (method == "classic" | method == "bayes")){
-    stop("For model = 'actor', only method = 'meta' is supported.")
-  }
-
-  if(!is.null(fixed) & (method == "meta")){
-    stop("The parameter fixed can only be declared for methods 'classic' and 'bayes'.")
-  }
-
-  #If the user enters either classic or bayes, they'll be prompted to answer
-  #a yes or no question
-  if(method == "classic" | method == "bayes"){
-    if(ordinal){
-      return(warning("For ordinal = TRUE, only method = 'meta' is supported."))
+    if((model[[1]] == "actor") & !is.null(random)){
+      stop("Argument model = 'actor', but random != NULL. Are you sure you didn't intend to specify random_sender or random_receiver?")
     }
-    proceed <- utils::askYesNo("We do not advise method = 'classic' or method = 'bayes', it is going to take an enormous amount of time to fit the model. Do you wish to proceed?")
-    if(is.na(proceed)){proceed <- FALSE}
-
-    if(proceed){
-      cat("As you wish! We are proceeding. You will pay with your time!\nRemember: Time is the only thing you won't get back.")
-      #First steps is creating the formulas for the lme4 or rstanarm
-      #Creating the formula to start the function
-      form <- createFormula(random, fixed, intercept)
-      #Reshaping the data (we need the cpp function rehPoisson)
-      df <- lapply(1:length(statistics), function(x) cbind(rehPoisson(statistics[[x]]), x))
-      df <- do.call("rbind", df)
-      names(df) <- c("dyad", "logtimediff", dimnames(statistics[[1]]$statistics)[[3]], "cluster")
-
-      if(method == "classic"){
-        #Fitting the full frequentist model
-        t1 <- Sys.time()
-        fit <- lme4::glmer(formula = form,
-                           data = df,
-                           family = stats::poisson(link = "log"), ...)
-        t2 <- Sys.time() - t1
-        cat(paste("\nThe model took", format(round(t2,2), units = "mins"), "of your life."))
-        #return(fit)
-      }
-
-      if(method == "bayes"){
-        #Fitting the full Bayesian model
-        t1 <- Sys.time()
-        fit <- rstanarm::stan_glmer(formula = form,
-                                    data = df,
-                                    family = stats::poisson(link = "log"), ...)
-        (t2 <- Sys.time() - t1)
-        cat(paste("\nThe model took", format(round(t2,2), units = "mins"), "of your life."))
-        #return(fit)
-      }
-    } else {
-      return(warning("The model didn't run."))
-    }
-  } else {
+  }
     #This runs the meta-analytic model
-    if(model == "tie"){
+  if(model[[1]] == "tie"){
       #statistics <- lapply(statistics, function(x) x$statistics)
       #This runs the dyadic relational event model
-      fit <- hrem(edgelist = edgelist,
-                  statistics = statistics,
-                  random = random,
-                  Niter = Niter,
-                  Nchain = Nchain,
-                  NburnIn = NburnIn,
-                  Nthin = Nthin,
-                  actors = actors,
-                  directed = directed,
-                  ordinal = ordinal)
-      fit$model <- "tie"
-      #cat(paste("The model took", format(round(fit$run_time,2), units = "mins"), "out of your life."))
-      #return(fit)
-    } else if(model == "actor"){
+    fit <- hrem(reh = reh,
+                statistics = statistics,
+                random = random,
+                Niter = Niter,
+                Nchain = Nchain,
+                NburnIn = NburnIn,
+                Nthin = Nthin)
+    fit$model <- "tie"
+    } else if(model[[2]] == "actor"){
       #This runs the actor-oriented model
-      #statistics <- lapply(statistics, function(x) x$statistics)
-      #for(i in 1:length(statistics)){names(statistics[[i]]) <- c("rate", "choice")}
-      fit <- hremActor(edgelist = edgelist,
-                       statistics = statistics,
-                       random_sender = random_sender,
-                       random_receiver = random_receiver,
-                       actors = actors,
-                       directed = directed,
-                       ordinal = ordinal,
-                       Niter = Niter,
-                       Nchain = Nchain,
-                       NburnIn = NburnIn,
-                       Nthin = Nthin)
-      fit$model <- "actor"
-      #cat(paste("The model took", format(round(fit$run_time,2), units = "mins"), "out of your life."))
-      #return(fit)
-    }
+    fit <- hremActor(reh = reh,
+                     statistics = statistics,
+                     random_sender = random_sender,
+                     random_receiver = random_receiver,
+                     Niter = Niter,
+                     Nchain = Nchain,
+                     NburnIn = NburnIn,
+                     Nthin = Nthin)
+    fit$model <- "actor"
   }
 
   #So in this part we will define the "metarem" class, this code has the same structure as remstimate
   output <- NULL
 
-  if(method %in% c("classic", "bayes")){
-    #In this case we want to preserve the original class, from lme4 or rstanarm,
-    #so the user can get all the functionalities from those packages
-    return(fit)
-  } else { #Now we define the "metarem" class
-    output <- structure(fit, class = "metarem")
-    return(output)
-  }
+  output <- structure(fit, class = "metarem")
+  return(output)
 }
 
 #########################################################################################
@@ -258,28 +181,21 @@ remx <- function(edgelist,
 #'
 #' A function to fit tie-oriented mixed-effect relational event models using a meta-analytix approximation. This function is called inside the \code{remx} function, so the user should avoid calling this function and using \code{remx} instead.
 #'
-#' @param edgelist a list containing multiple relational event sequences
+#' @param reh a list containing multiple relational event sequences pre-processed by the \code{remify} function.
 #' @param statistics a list containing multiple \code{remstats} objects
 #' @param random a vector containing the names of the covariates that will be treated as random effects.
 #' @param Niter number of iterations of the Gibbs sampler. The default is \code{Niter = 100000}.
 #' @param Nchain number of chains of the Gibbs sampler.The default is \code{Nchain = 2}.
 #' @param NburnIn number of samples to be discarded.The default is \code{NburnIn = 5000}.
 #' @param Nthin number of samples to discarded in between every sample kept.The default is \code{NburnIn = 10}.
-#' @param actors a list containing the names of the actors in every network, should be the same lenght as \code{edgelist} and \code{statistics}.
-#' @param ordinal logical value indicating whether the timestamps of the events are know. The default is \code{ordinal = FALSE}. If \code{ordinal = TRUE}, that means that only the order of the events is known.
-#' @param directed logical value indicating whether the model is for directed network. The default is \code{directed = TRUE}.
-#'
 #' @return  A list containing the output of the Gibbs sampler for this model.
-hrem <- function(edgelist,
+hrem <- function(reh,
                  statistics,
                  random = NULL,
                  Niter = 10000,
                  Nchain = 2,
                  NburnIn = 5000,
-                 Nthin = 10,
-                 actors = NULL,
-                 ordinal = FALSE,
-                 directed = TRUE){
+                 Nthin = 10){
 
   #edgelist: this will be a list with multiple relational event sequences
   #statistics: This is list containing multiple arrays with statistics
@@ -298,15 +214,11 @@ hrem <- function(edgelist,
   
   estimates <- vector("list")
   t1 <- Sys.time()
-  for(i in 1:length(edgelist)){
+  for(i in 1:length(reh)){
 
-    edgelistREH <- remify::remify(edgelist[[i]], model = "tie", actors = actors[[i]],
-                               directed = directed, ordinal = ordinal)
-
-    rem <- remstimate::remstimate(reh = edgelistREH,
+    rem <- remstimate::remstimate(reh = reh[[i]],
                                   stats = statistics[[i]],
                                   method = "MLE",
-                                  #model = "tie",
     )
 
     estimates[[i]] <- list(coef = rem$coefficients, var = rem$vcov)
@@ -317,11 +229,11 @@ hrem <- function(edgelist,
   #getting the names for the fixed-effects
   fixed <- dimnames(statistics[[1]])[3][[1]]
 
-  names(estimates) <- paste0("cluster_", 1:length(edgelist))
+  names(estimates) <- paste0("cluster_", 1:length(reh))
 
 
   #checking whether all statistics array contain the same number of covariates
-  K <- length(edgelist) #number of groups
+  K <- length(reh) #number of groups
 
   if(!is.null(random)){
     p <- length(random) #number random effects
@@ -410,6 +322,8 @@ hrem <- function(edgelist,
     psi_in <- t(mvtnorm::rmvnorm(Nchain, mean =  psiMat %*% rowMeans(psi))) #random-effect means
 
   } else {
+    muMat <- matrix(0, nrow = 1, ncol = 1)
+    psiMat <- matrix(0, nrow = 1, ncol = 1)
     psi_in <- t(mvtnorm::rmvnorm(Nchain, mean = rowMeans(psi))) #random-effect means
   }
 
@@ -480,7 +394,7 @@ hrem <- function(edgelist,
 #'
 #' A function to fit DyNaM mixed-effect relational event models using a meta-analytic approximation. This function is called inside the \code{remx} function, so the user should avoid calling this function and using \code{remx} instead.
 #'
-#' @param edgelist a list containing multiple relational event sequences
+#' @param reh a list containing multiple relational event sequences pre-processed by the \code{remify} function.
 #' @param statistics a list containing multiple \code{remstats} objects
 #' @param random_sender a vector containing the names of the covariates that will be treated as random effects in the sender model.
 #' @param random_receiver a vector containing the names of the covariates that will be treated as random effects in the receiver model.
@@ -488,22 +402,16 @@ hrem <- function(edgelist,
 #' @param Nchain number of chains of the Gibbs sampler.The default is \code{Nchain = 2}.
 #' @param NburnIn number of samples to be discarded.The default is \code{NburnIn = 5000}.
 #' @param Nthin number of samples to discarded in between every sample kept.The default is \code{NburnIn = 10}.
-#' @param actors a list containing the names of the actors in every network, should be the same lenght as \code{edgelist} and \code{statistics}.
-#' @param ordinal logical value indicating whether the timestamps of the events are know. The default is \code{ordinal = FALSE}. If \code{ordinal = TRUE}, that means that only the order of the events is known.
-#' @param directed logical value indicating whether the model is for directed network. The default is \code{directed = TRUE}.
 #'
 #' @return  A list containing the output of the Gibbs sampler for this model.
-hremActor <- function(edgelist,
+hremActor <- function(reh,
                       statistics,
                       Niter = 10000,
                       Nchain = 2,
                       NburnIn = 5000,
                       Nthin = 10,
                       random_sender = NULL,
-                      random_receiver = NULL,
-                      actors = NULL,
-                      ordinal = FALSE,
-                      directed = TRUE){
+                      random_receiver = NULL){
   #HERE THE FUNCTION STARTS
   
   #Checking whether all covariables declared in the random parameter are in the data matrix
@@ -523,11 +431,9 @@ hremActor <- function(edgelist,
   
   estimates <- vector("list")
   t1 <- Sys.time()
-  for(i in 1:length(edgelist)){
-    edgelistREH <- remify::remify(edgelist[[i]], model = "actor", actors = actors[[i]],
-                                  directed = directed, ordinal = ordinal)
+  for(i in 1:length(reh)){
     
-    rem <- remstimate::remstimate(reh = edgelistREH,
+    rem <- remstimate::remstimate(reh = reh[[i]],
                                   stats = statistics[[i]],
                                   method = "MLE",
                                   #model = "actor",
@@ -544,7 +450,7 @@ hremActor <- function(edgelist,
   fixed_receiver <- dimnames(statistics[[1]]$receiver_stats)[3][[1]]
   
   #checking whether all statistics array contain the same number of covariates
-  K <- length(edgelist) #number of groups
+  K <- length(reh) #number of groups
   
   #Checking for random effects
   #SENDER MODEL
@@ -709,11 +615,12 @@ hremActor <- function(edgelist,
       #This is a matrix used to separate the random and the fixed effects, in the conditional distribution of delta
       phiMat <- muGMat
     }
-    
     #initial values
     phi_in <- t(mvtnorm::rmvnorm(Nchain, mean =  phiMat %*% as.matrix(rowMeans(phi)))) #random-effect means
     
   } else {
+    muGMat <- matrix(0, nrow = 1, ncol = 1)
+    phiMat <- matrix(0, nrow = 1, ncol = 1)
     phi_in <- t(mvtnorm::rmvnorm(Nchain, mean = rowMeans(phi))) #random-effect means
   }
   
@@ -736,6 +643,8 @@ hremActor <- function(edgelist,
     psi_in <- t(mvtnorm::rmvnorm(Nchain, mean =  psiMat %*% as.matrix(rowMeans(psi)))) #random-effect means
     
   } else {
+    muBMat <- matrix(0, nrow = 1, ncol = 1)
+    psiMat <- matrix(0, nrow = 1, ncol = 1)
     psi_in <- t(mvtnorm::rmvnorm(Nchain, mean = rowMeans(psi))) #random-effect means
   }
   
@@ -837,61 +746,6 @@ hremActor <- function(edgelist,
 
 #This function will create a formula from the names of the variables that are included in the
 #fixed and random parameters of the remx function
-
-#' createFormula
-#'
-#' A function only used inside the \code{remx} function to create a formula that will be passed to \code{glmer} or \code{stan_glmer} functions. It should never be called outside \code{remx}
-#'
-#' @param random a vector containing the names of variables to be treated as random effects
-#' @param fixed a vector containing the names of variables to be treated as fixed effects
-#' @param intercept a logical value stating whether the formula should contain an intercept or not, the default is \code{intercept = TRUE}
-#'
-#' @return a formula object
-createFormula <- function(random = NULL, fixed = NULL, intercept = T){
-
-  if(!is.null(random)){
-    rnd <- paste0(random, collapse = "+")
-  }
-  if(!is.null(fixed)){
-    #We always want to have the random as fixed effect too!
-    #Since the distribution of the random effects is N(0, Sigma)
-    fix <- paste0(c(fixed, random), collapse = "+")
-  }
-
-  #Creating the formula
-  if(intercept){
-    if(is.null(random)){
-      if("baseline" %in% fixed){
-        form <- stats::as.formula(paste0("dyad", "~", fix, "-1+offset(logtimediff)"))
-      } else {
-        form <- stats::as.formula(paste0("dyad", "~", fix, "+offset(logtimediff)"))
-      }
-    } else if(is.null(fixed)){
-      if("baseline" %in% random){
-        form <- stats::as.formula(paste0("dyad", "~", "offset(logtimediff)+", "(", rnd, "-1|cluster)"))
-      } else {
-        form <- stats::as.formula(paste0("dyad", "~", "offset(logtimediff)+", "(", rnd, "|cluster)"))
-      }
-    } else {
-      if("baseline" %in% random){
-        form <- stats::as.formula(paste0("dyad", "~", fix, "-1+offset(logtimediff)+", "(", rnd, "-1|cluster)"))
-      } else {
-        form <- stats::as.formula(paste0("dyad", "~", fix, "+offset(logtimediff)+", "(", rnd, "|cluster)"))
-      }
-    }
-  } else {
-    if(is.null(random)){
-      form <- stats::as.formula(paste0("dyad", "~", fix, "-1+offset(logtimediff)"))
-    } else if(is.null(fixed)){
-      form <- stats::as.formula(paste0("dyad", "~ -1+offset(logtimediff)+", "(", rnd, "-1|cluster)"))
-    } else {
-      form <- stats::as.formula(paste0("dyad", "~", fix, "-1+offset(logtimediff)+", "(", rnd, "-1|cluster)"))
-    }
-  }
-
-  return(form)
-
-}
 
 #########################################################################################
 #########################################################################################
@@ -1108,8 +962,14 @@ VarCov_metarem <- function(object){
   if(object$model == "tie"){
     return(VarCov)
   } else {
-    return(list(sender_model = as.matrix(VarCovSnd),
-                receiver_model = as.matrix(VarCovRec)))
+    if(object$random_receiver & !object$random_sender){
+      return(list(receiver_model = as.matrix(VarCovRec)))
+    } else if(!object$random_receiver & object$random_sender){
+      return(list(sender_model = as.matrix(VarCovSnd)))
+    } else {
+      return(list(sender_model = as.matrix(VarCovSnd),
+                  receiver_model = as.matrix(VarCovRec))) 
+    }
   }
 
 }
@@ -1158,6 +1018,7 @@ summary.metarem <- function(object, ...){
       summary_out$VarCov <- VarCov_metarem(object)
     }
     attr(summary_out, "model") <- "tie"
+    attr(summary_out, "random") <- object$random
     attr(summary_out, "Niter") <- object$Niter
     attr(summary_out, "NburnIn") <- object$NburnIn
     attr(summary_out, "Nchain") <- object$Nchain
@@ -1221,8 +1082,10 @@ print.summary.metarem <- function(x, ...){
     cat("Fixed effects:\n\n")
     stats::printCoefmat(round(x$coefsTab,3))
     cat("\n")
-    cat("Covariance matrix of random effects (posterior mean):\n\n")
-    stats::printCoefmat(round(x$VarCov,3))
+    if(attr(x, "random")){
+      cat("Covariance matrix of random effects (posterior mean):\n\n")
+      stats::printCoefmat(round(x$VarCov,3)) 
+    }
     cat("\n")
     cat("Statistics generated based on", attr(x, "Niter"), "MCMC samples.\n")
     cat("The first", attr(x, "NburnIn"), "were discared and one in every", attr(x, "Nthin"), "were kept.\n")
@@ -1274,38 +1137,35 @@ print.metarem <- function(x, ...){
 #####################################################################################
 #####################################################################################
 
-#In this part, we have the streamrem code
+#In this part, we have the strem code
 
 #####################################################################################
 #####################################################################################
 #####################################################################################
 
-#'streamrem
+#'strem
 #'
-#'A function to estimate relational event models on data streams.
+#'A function to streaming relational event models. A data stream is continuously augmented with new events, this function allows quick updating of the estimates.
 #'
-#'@param data This is either a list containing edgelist and statistics for the batches of the networks (see example below), or a character string containing the paths where the data is saved in the hard drive. In case the data is in HD the batches should be saved separately (in format .rds) and each should be a list with edgelist and statistics.
-#'@param actors A character vector containing the actors in the network, this should be particularly used when not every actor has been observed. See \code{?remify::remify}.
-#'@param directed If \code{TRUE} then the network is treated as directed.
-#'@param ordinal Set to \code{TRUE} in case only the order of the events is known.
-#'@param update Set to \code{TRUE} to update the estimates with new batches. You should provide a model previously fitted with the \code{streamrem} function.
-#'@param model A model previously fitted with the \code{streamrem} function.
+#'@param data This is either a list containing edgelist, and reh object pre processed by remify, and statistics for the batches of the networks (see example below), or a character string containing the paths where the data is saved in the hard drive. In case the data is in HD the batches should be saved separately (in format .rds) and each should be a list with edgelist, an reh object pre processed by remify, and statistics.
+#'@param update Set to \code{TRUE} to update the estimates with new batches. You should provide a model previously fitted with the \code{strem} function.
+#'@param model A model previously fitted with the \code{strem} function.
+#'
+#'@return A list of class \code{strem} with the following objects:
+#'@return \itemize{
+#' \item \code{beta} a matrix with the estimate parameters per batch.
+#' \item \code{omega} a 3-d array containing the estimated covariance matrix per batch.
+#' \item \code{timeL} the time of the observed event of the last batch
+#' \item \code{run_time} the time it took for the model to run.
+#'}
 #'
 #'@examples
 #'
 #'#First install remulate, remstats and remify
-#'#library(devtools)
-#'#install_github("TilburgNetworkGroup/remulate")
-#'#devtools::install_github("TilburgNetworkGroup/remify")
-#'#devtools::install_github("TilburgNetworkGroup/remstats")
 #'
-#' edgelist <- stream
+#' edgelist <- stream$edgelist
 #'
 #' library(remstats)
-#'
-#' names(edgelist) <- c("time", "actor1", "actor2")
-#'
-#' actors <- as.character(1:10)
 #'
 #' #We will devide the network in 10 batches of 500
 #' events <- seq(1, 5001, by = 500)
@@ -1313,8 +1173,8 @@ print.metarem <- function(x, ...){
 #' #Declaring which effects we want remstats to compute
 #' effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
 #'
-#' #Getting the remify object
-#' rehObj <- remify::remify(edgelist, model = "tie", actors = actors)
+#' #Getting the remify object for the entire sequence
+#' rehObj <- remify::remify(edgelist, model = "tie")
 #'
 #' data <- vector("list")
 #'
@@ -1324,11 +1184,13 @@ print.metarem <- function(x, ...){
 #'   edl <- edgelist[events[i-1]:(events[i]-1),]
 #'   #Every piece needs to be stored a in a list with edgelist and statistics
 #'   data[[i-1]] <- list(edgelist = edl,
+#'                       reh = remify::remify(edl, model = "tie", 
+#'                                            actors = stream$actors), #pre processing
 #'                       statistics = stats)
 #' }
 #
 #' #Let's compute the effects for the first 7 batches of the networks
-#' fit <- streamrem(data[1:7], actors)
+#' fit <- strem(data[1:7])
 #'
 #' #printing the parameters
 #' print(fit)
@@ -1336,7 +1198,7 @@ print.metarem <- function(x, ...){
 #' plot(fit)
 #'
 #' #Now we can update the model with the remaining 3 batches
-#' fit2 <- streamrem(data[8:10], actors, update = TRUE, model = fit)
+#' fit2 <- strem(data[8:10], update = TRUE, model = fit)
 #'
 #' #printing the parameters
 #' print(fit2)
@@ -1344,17 +1206,14 @@ print.metarem <- function(x, ...){
 #' plot(fit2)
 #'
 #'@export
-streamrem <- function(data,
-                      actors = NULL,
-                      directed = TRUE,
-                      ordinal = FALSE,
-                      update = F,
-                      model = NULL){
+strem <- function(data,
+                  update = F,
+                  model = NULL){
   #Storing the results
   estimates <- vector("list")
   #Checking whether we need to update the model
   if(update & is.null(model)){
-    stop("update = TRUE requires a model object previously fitted with streamrem.")
+    stop("update = TRUE requires a model object previously fitted with strem.")
   }
   #Number of batches
   L <- length(data)
@@ -1396,14 +1255,11 @@ streamrem <- function(data,
     #Extracting statistics, the list have to be named
     stats <- dat$statistics
     class(stats) <- c("tomstats", "remstats")
-    edgelistREH <- suppressWarnings(
-      remify::remify(edgelist, ordinal = F, actors = actors, model = "tie", directed = directed)
-    )
 
     #class(dataList[[2]]) <- c("tomstats", "remstats")
     print(paste("Obtaining the MLE estimates."))
     rem <- suppressWarnings(
-      remstimate::remstimate(reh = edgelistREH,
+      remstimate::remstimate(reh = dat$reh,
                              stats = stats,
                              method = "MLE")
     )
@@ -1450,7 +1306,7 @@ streamrem <- function(data,
   #Computing intervals
   conf_intervals <- intervals(final_list)
   final_list$confint <- conf_intervals
-  class(final_list) <- "streamrem"
+  class(final_list) <- "strem"
   return(final_list)
 }
 
@@ -1461,7 +1317,7 @@ streamrem <- function(data,
 
 #'interval
 #'
-#'@param fit A streamrem object.
+#'@param fit A strem object.
 #'@param prob A probability to compute the confidence interval, default is 0.95.
 #'@export
 intervals <- function(fit,
@@ -1485,16 +1341,16 @@ intervals <- function(fit,
 #################################################################################
 #################################################################################
 
-#'plot.streamrem
+#'plot.strem
 #'
 #'Plots lines with the trends of each parameter estimates and 95% confidence intervals.
-#'@param x A streamrem object.
+#'@param x A strem object.
 #'@param same_page The default is FALSE. If TRUE, the function will create all graphs in one plot.
 #'@param ... further arguments to be passed to the 'summary' method
 #'@export
-plot.streamrem <- function(x, same_page = FALSE, ...){
-  if (!inherits(x, "streamrem"))
-    warning("calling streamrem(<fake-streamrem-object>) ...")
+plot.strem <- function(x, same_page = FALSE, ...){
+  if (!inherits(x, "strem"))
+    warning("calling strem(<fake-strem-object>) ...")
   beta <- x$beta
   intervals <- x$confint
   covs <- rownames(beta)
@@ -1521,21 +1377,22 @@ plot.streamrem <- function(x, same_page = FALSE, ...){
 #################################################################################
 #################################################################################
 
-#' summary.streamrem
-#' @title summary.streamrem
-#' @rdname summary.streamrem
-#' @description A function that arranges a summary of a 'streamrem' object
-#' @param object is a \code{streamrem} object
+#' summary.strem
+#' @title summary.strem
+#' @rdname summary.strem
+#' @description A function that arranges a summary of a 'strem' object
+#' @param object is a \code{strem} object
 #' @param ... further arguments to be passed to the 'summary' method
-#' @method summary streamrem
+#' @method summary strem
 #' @export
-summary.streamrem <- function(object, ...){
-  if (!inherits(object, "streamrem"))
-    warning("calling streamrem(<fake-streamrem-object>) ...")
+summary.strem <- function(object, ...){
+  if (!inherits(object, "strem"))
+    warning("calling strem(<fake-strem-object>) ...")
   summary_out <- vector("list")
   summary_out$beta <- object$beta
+  summary_out$omega <- object$omega
   summary_out$run_time <- object$run_time
-  class(summary_out) <- "summary.streamrem"
+  class(summary_out) <- "summary.strem"
   return(summary_out)
 }
 
@@ -1543,20 +1400,24 @@ summary.streamrem <- function(object, ...){
 #################################################################################
 #################################################################################
 
-#' print.summary.streamrem
-#' @title print.summary.streamrem
-#' @rdname print.summary.streamrem
+#' print.summary.strem
+#' @title print.summary.strem
+#' @rdname print.summary.strem
 #' @description A function that prints out a summary of a 'metarem' object.
-#' @param x is a \code{summary.streamrem} object
+#' @param x is a \code{summary.strem} object
 #' @param ... further arguments to be passed to the 'print.summary' method
-#' @method print summary.streamrem
+#' @method print summary.strem
 #' @export
-print.summary.streamrem <- function(x, ...){
+print.summary.strem <- function(x, ...){
   cat("Meta-analytic relational event model. \n")
   cat("\n")
   cat(paste("The model ran", nrow(x$beta), "covariates in total."))
   cat("\n")
-  stats::printCoefmat(t(x$beta),3)
+  stddev <- round(as.matrix(diag(x$omega[,,ncol(x$beta)])),5)
+  estim <- round(as.matrix(x$beta[,ncol(x$beta)]),5)
+  m <- cbind(estim, stddev)
+  colnames(m) <- c("Estimates", "Std. Error")
+  stats::printCoefmat(m)
   cat("\n")
   cat(paste("The model took",  format(round(x$run_time,2), units = "secs"), "to run."))
 }
@@ -1565,17 +1426,17 @@ print.summary.streamrem <- function(x, ...){
 #################################################################################
 #################################################################################
 
-#' print.streamrem
-#' @title print.streamrem
-#' @rdname print.streamrem
-#' @description A function that prints out a summary of a 'streamrem' object.
-#' @param x is a \code{summary.streamrem} object
+#' print.strem
+#' @title print.strem
+#' @rdname print.strem
+#' @description A function that prints out a summary of a 'strem' object.
+#' @param x is a \code{summary.strem} object
 #' @param ... further arguments to be passed to the 'print.summary' method
-#' @method print streamrem
+#' @method print strem
 #' @export
-print.streamrem <- function(x, ...){
+print.strem <- function(x, ...){
 
   #If only print is called, then we call summary
-  return(summary.streamrem(x))
+  return(summary.strem(x))
 
 }

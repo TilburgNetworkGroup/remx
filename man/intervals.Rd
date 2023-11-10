@@ -7,7 +7,7 @@
 intervals(fit, prob = 0.95)
 }
 \arguments{
-\item{fit}{A streamrem object.}
+\item{fit}{A strem object.}
 
 \item{prob}{A probability to compute the confidence interval, default is 0.95.}
 }

@@ -1389,9 +1389,27 @@ summary.strem <- function(object, ...){
   if (!inherits(object, "strem"))
     warning("calling strem(<fake-strem-object>) ...")
   summary_out <- vector("list")
-  summary_out$beta <- object$beta
-  summary_out$omega <- object$omega
+  summary_out$beta <- object$beta[,ncol(object$beta)]
+  summary_out$omega <- sqrt(diag(object$omega[,,ncol(object$beta)]))
+  summary_out$p.value <- 2*(1-stats::pnorm(abs(summary_out$beta/summary_out$omega)))
+  summary_out$t_statistic <- summary_out$beta/summary_out$omega
   summary_out$run_time <- object$run_time
+  #Obtaining significance
+  significance <- c()
+  for(i in 1:length(summary_out$p.value)){
+    if(summary_out$p.value[i] == 0){
+      significance <- c(significance, "***")
+    } else if(summary_out$p.value[i] > 0 & summary_out$p.value[i] <= .001){
+      significance <- c(significance, "**")
+    } else if(summary_out$p.value[i] > .001 & summary_out$p.value[i] <= .01){
+      significance <- c(significance, "*")
+    } else if(summary_out$p.value[i] > .01 & summary_out$p.value[i] <= .05){
+      significance <- c(significance, ".")
+    } else {
+      significance <- c(significance, " ")
+    }
+  }
+  summary_out$significance <- significance
   class(summary_out) <- "summary.strem"
   return(summary_out)
 }
@@ -1413,11 +1431,21 @@ print.summary.strem <- function(x, ...){
   cat("\n")
   cat(paste("The model ran", nrow(x$beta), "covariates in total."))
   cat("\n")
-  stddev <- round(as.matrix(diag(x$omega[,,ncol(x$beta)])),5)
-  estim <- round(as.matrix(x$beta[,ncol(x$beta)]),5)
-  m <- cbind(estim, stddev)
-  colnames(m) <- c("Estimates", "Std. Error")
-  stats::printCoefmat(m)
+  stddev <- round(as.matrix(x$omega),5)
+  estim <- round(as.matrix(x$beta),5)
+  p <- round(as.matrix(x$p.value),5)
+  t <- round(as.matrix(x$t_statistic),5)
+  sig <- x$significance
+  m <- data.frame("estimates" = estim,
+                  "std error" = stddev,
+                  "t value" = t,
+                  "p value" = p,
+                  "signif" = sig)
+  print(m)
+  cat("\n")
+  cat("------")
+  cat("\n")
+  cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1")
   cat("\n")
   cat(paste("The model took",  format(round(x$run_time,2), units = "secs"), "to run."))
 }

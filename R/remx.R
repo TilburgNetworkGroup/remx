@@ -1389,8 +1389,9 @@ summary.strem <- function(object, ...){
   if (!inherits(object, "strem"))
     warning("calling strem(<fake-strem-object>) ...")
   summary_out <- vector("list")
-  summary_out$beta <- object$beta[,ncol(object$beta)]
-  summary_out$omega <- sqrt(diag(object$omega[,,ncol(object$beta)]))
+  summary_out$batches <- ncol(object$beta)
+  summary_out$beta <- object$beta[,summary_out$batches]
+  summary_out$omega <- sqrt(diag(object$omega[,,summary_out$batches]))
   summary_out$p.value <- 2*(1-stats::pnorm(abs(summary_out$beta/summary_out$omega)))
   summary_out$t_statistic <- summary_out$beta/summary_out$omega
   summary_out$run_time <- object$run_time
@@ -1429,7 +1430,7 @@ summary.strem <- function(object, ...){
 print.summary.strem <- function(x, ...){
   cat("Meta-analytic relational event model. \n")
   cat("\n")
-  cat(paste("The model ran", nrow(x$beta), "covariates in total."))
+  cat(paste0("The model ran ", x$batches, " batches. \n"))
   cat("\n")
   stddev <- round(as.matrix(x$omega),5)
   estim <- round(as.matrix(x$beta),5)
@@ -1449,7 +1450,6 @@ print.summary.strem <- function(x, ...){
   cat("\n")
   cat(paste("The model took",  format(round(x$run_time,2), units = "secs"), "to run."))
 }
-
 #################################################################################
 #################################################################################
 #################################################################################

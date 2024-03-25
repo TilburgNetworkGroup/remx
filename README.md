@@ -165,4 +165,6 @@ fit <- strem(data[8:10], update = T, model = fit)
 print(fit)
 ```
 
+## Acknowledgement
 
+The development of this package was supported by a Vidi Grant (452-17-006) awarded by the Netherlands Organization for Scientific Research (NWO) Grant and an ERC Starting Grant (758791).

@@ -165,6 +165,21 @@ fit <- strem(data[8:10], update = T, model = fit)
 print(fit)
 ```
 
+## Citation
+
+Vieira, F., Leenders, R. & Mulder, J. Fast meta-analytic approximations for relational event models: applications to data streams and multilevel data. J Comput Soc Sc 7, 1823–1859 (2024). https://doi.org/10.1007/s42001-024-00290-7
+
+```{r}
+@article{vieira2024fast,
+  title={Fast meta-analytic approximations for relational event models: applications to data streams and multilevel data},
+  author={Vieira, Fabio and Leenders, Roger and Mulder, Joris},
+  journal={Journal of Computational Social Science},
+  pages={1--37},
+  year={2024},
+  publisher={Springer}
+}
+```
+
 ## Acknowledgement
 
 The development of this package was supported by a Vidi Grant (452-17-006) awarded by the Netherlands Organization for Scientific Research (NWO) Grant and an ERC Starting Grant (758791).

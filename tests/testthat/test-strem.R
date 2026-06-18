@@ -3,34 +3,27 @@ library(remstats)
 library(testthat)
 
 test_that("Testing the data streaming meta analytic approximation",{
-
+  
   edgelist <- stream$edgelist
-
-  #We will devide the network in 10 batches of 500
   events <- seq(1, 5001, by = 500)
-  #Declaring which effects we want remstats to compute
-  effects <- ~ remstats::inertia(scaling = "std") + 
-    remstats::reciprocity(scaling = "std") + 
+  effects <- ~ remstats::inertia(scaling = "std") +
+    remstats::reciprocity(scaling = "std") +
     remstats::indegreeSender(scaling = "std") +
     remstats::outdegreeSender(scaling = "std")
-  #Getting the remify object
-
-  rehObj <- remify::remify(edgelist, model = "tie")
-
+  
   data <- vector("list")
+  origin_i <- 0
   for(i in 2:length(events)){
-    #Computing statistics
-    stats <- remstats::tomstats(effects, rehObj, start = events[i-1], stop = events[i]-1)
-    edl <- edgelist[events[i-1]:(events[i]-1),]
-    #Every piece needs to be stored a in a list with edgelist and statistics
+    edl <- edgelist[events[i-1]:(events[i]-1), ]
+    reh_i <- remify::remify(edl, model = "tie",
+                            actors = stream$actors,
+                            origin = origin_i)
+    stats_i <- remstats::tomstats(effects, reh_i)
     data[[i-1]] <- list(edgelist = edl,
-                        reh = remify::remify(edl, model = "tie", actors = stream$actors),
-                        statistics = stats)
+                        reh = reh_i,
+                        statistics = stats_i)
+    origin_i <- edl[nrow(edl), 1]
   }
-  #Let's compute the effects for the first 7 batches of the networks
-  fit <-  expect_no_error(
-    strem(data[1:7])
-  )
-}
-)
-
+  
+  fit <- expect_no_error(strem(data[1:7]))
+})

@@ -45,7 +45,7 @@ test_that("Testing whether the remx function throw expected errors.", {
   stats2 <- stats
   stats2[[15]] <- "a"
   expect_error(
-    remx(reh = rehobj,
+    remx(reh = rehObj,
          statistics = stats2,
          random = c("baseline", "inertia", "reciprocity"))
   )
@@ -67,7 +67,7 @@ test_that("Testing whether the remx function throw expected errors.", {
   stats2[[15]] <- stats[[15]]
   expect_error(
     remx(reh = rehObj,
-         statistics = stats,
+         statistics = stats2,
          random_sender = c("baseline"),
          random_receiver = c("indegreeReceiver", "rrankSend"))
   )

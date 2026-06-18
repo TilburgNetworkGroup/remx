@@ -28,50 +28,46 @@ A function to streaming relational event models. A data stream is continuously a
 }
 \examples{
 
-#First install remulate, remstats and remify
-
 edgelist <- stream$edgelist
 
 library(remstats)
 
-#We will devide the network in 10 batches of 500
+#We will divide the network in 10 batches of 500
 events <- seq(1, 5001, by = 500)
 
 #Declaring which effects we want remstats to compute
-effects <- ~ remstats::inertia(scaling = "std") + remstats::reciprocity(scaling = "std")
-
-
-#Getting the remify object for the entire sequence
-rehObj <- remify::remify(edgelist, model = "tie")
+effects <- ~ remstats::inertia(scaling = "std") +
+  remstats::reciprocity(scaling = "std") +
+  remstats::indegreeSender(scaling = "std") +
+  remstats::outdegreeSender(scaling = "std")
 
 data <- vector("list")
+origin_i <- 0
 
 for(i in 2:length(events)){
-  #Computing statistics
-  stats <- remstats::tomstats(effects, rehObj, start = events[i-1], stop = events[i]-1)
-  edl <- edgelist[events[i-1]:(events[i]-1),]
-  #Every piece needs to be stored a in a list with edgelist and statistics
+  edl <- edgelist[events[i-1]:(events[i]-1), ]
+  reh_i <- remify::remify(edl, model = "tie",
+                          actors = stream$actors,
+                          origin = origin_i)
+  stats_i <- remstats::tomstats(effects, reh_i)
   data[[i-1]] <- list(edgelist = edl,
-                      reh = remify::remify(edl, model = "tie", 
-                                           actors = stream$actors), #pre processing
-                      statistics = stats)
+                      reh = reh_i,
+                      statistics = stats_i)
+  origin_i <- edl[nrow(edl), 1]
 }
+
 #Let's compute the effects for the first 7 batches of the networks
 fit <- strem(data[1:7])
 
 #printing the parameters
 print(fit)
-#Plotting a trend line of the estimates
+
+#Plot a trend line with the estimates
 plot(fit)
 
 #Now we can update the model with the remaining 3 batches
-
 fit2 <- strem(data[8:10], update = TRUE, model = fit)
 
-
-#printing the parameters
 print(fit2)
-#Plot a trend line with the estimates
-plot(fit2)
 
 }

@@ -144,7 +144,7 @@ for(i in 2:length(events)){
   
   # Update origin for next batch
   origin_i <- edl[nrow(edl), 1]
-
+}
 ```
 
 ## Fitting the model

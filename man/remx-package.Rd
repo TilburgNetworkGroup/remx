@@ -3,7 +3,6 @@
 \docType{package}
 \name{remx-package}
 \alias{remx-package}
-\alias{_PACKAGE}
 \title{remx: Meta-Analytic approximations for mixed-effect relational event models and data streams}
 \description{
 This package implements meta-analytic approximations for mixed-effect tie- and actor-oriented relational event models and data streams. Also, using a fully frequentist model will return and lme4 object and using fully Bayesian model will return an rstanarm object.
@@ -13,6 +12,7 @@ This package implements meta-analytic approximations for mixed-effect tie- and a
 
 Authors:
 \itemize{
+  \item Fabio Generoso Vieira \email{f.v.generosovieira@tilburguniversity.edu}
   \item Rumana Lakdawala \email{r.j.lakdawala@tilburguniversity.edu}
   \item Marlyne Meijerink-Bosman \email{m.l.meijerink@tilburguniversity.edu}
   \item Giuseppe Arena \email{g.arena@tilburguniversity.edu}

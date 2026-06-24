@@ -4,12 +4,10 @@ A package with meta-analytic approximations for relational event models.
 This package supports mixed-effects models, data streams, and large networks. 
 
 # Installation 
-```r{}
+```R
 install.packages("devtools")
-devtools::install_github("TilburgNetworkGroup/remify") 
-devtools::install_github("TilburgNetworkGroup/remstimate")
-devtools::install_github("TilburgNetworkGroup/remstats")
-devtools::install_github("TilburgNetworkGroup/remx")
+install.packages(c('remstats', 'remstimate', 'remify'))
+devtools::install_github("Fabio-Vieira/remx")
 ```
 
 # Mixed-Effect Models
@@ -20,7 +18,7 @@ The **remx** function is the main function of the package. It fits all multileve
 
 ### Tie-oriented Model
 
-```r{}
+```R
 
 #----------------------------#
 #     Tie-Oriented model     #
@@ -50,7 +48,7 @@ print(fit)
 
 ### Actor-oriented Model
 
-```r{}
+```R
 
 #----------------------------#
 #    Actor-Oriented model    #
@@ -77,19 +75,19 @@ These functions are inspired by the functions contained in the **lme4** package.
 
 ### Random effects
 
-```r{}
+```R
 ranef_metarem(fit)
 ```
 
 ### Fixed effects
 
-```r{}
+```R
 fixef_metarem(fit)
 ```
 
 ### Random-effect covariance matrix
 
-```r{}
+```R
 VarCov_metarem(fit)
 ```
 
@@ -101,7 +99,7 @@ In this case, we have a relational-event network that is augmented with addition
 
 We need to use the arguments **start** and **stop** from **remstats** in order to compute the statistics for a specific portion of the event sequence. For instance, if we wish to fit the model in batches of 500, we need to declare **start** = 1 and **stop** = 500, then **start** = 501 and **stop** = 1000, and so on.
 
-```r{}
+```R
 
 #Now let's simulate a network
 edgelist <- stream$edgelist
@@ -112,32 +110,48 @@ library(remstats)
 events <- seq(1, 5001, by = 500)
 
 #Declaring which effects we want remstats to compute
-effects <- ~ remstats::inertia(scaling = "std") + 
-  remstats::reciprocity(scaling = "std") + 
+edgelist <- stream$edgelist
+
+# Divide into 10 batches of 500 events
+events <- seq(1, 5001, by = 500)
+
+# Effects
+effects_stream <- ~ remstats::inertia(scaling = "std") +
+  remstats::reciprocity(scaling = "std") +
   remstats::indegreeSender(scaling = "std") +
   remstats::outdegreeSender(scaling = "std")
 
-#Getting the remify object
-rehObj <- remify::remify(edgelist, model = "tie", actors = stream$actors)
+# Full remify object for the entire sequence
+rehObj_stream <- remify::remify(edgelist, model = "tie", actors = stream$actors)
 
-data <- vector("list")
+data_stream <- vector("list")
+origin_i <- 0  # first batch starts from zero
 
 for(i in 2:length(events)){
-  #Computing statistics
-  stats <- remstats::tomstats(effects, rehObj, start = events[i-1], stop = events[i]-1)
-  edl <- edgelist[events[i-1]:(events[i]-1),]
-  #Every piece needs to be stored a in a list with edgelist and statistics
-  data[[i-1]] <- list(edgelist = edl,
-                      reh = remify::remify(edl, model = "tie", actors = stream$actors),
-                      statistics = stats)
+  edl <- edgelist[events[i-1]:(events[i]-1), ]
+  
+  # Build reh with correct origin so intereventTime[1] is small
+  reh_i <- remify::remify(edl, model = "tie", 
+                          actors = stream$actors,
+                          origin = origin_i)
+  
+  # Compute stats from this reh directly — ensures full compatibility
+  stats_i <- remstats::tomstats(effects_stream, reh_i)
+  
+  data_stream[[i-1]] <- list(edgelist = edl,
+                             reh = reh_i,
+                             statistics = stats_i)
+  
+  # Update origin for next batch
+  origin_i <- edl[nrow(edl), 1]
 }
 ```
 
 ## Fitting the model
 
-```r{}
+```R
 #Let's compute the effects for the first 7 batches of the networks
-fit <- strem(data[1:7])
+fit <- strem(data_stream[1:7])
 
 #printing the parameters
 print(fit)
@@ -147,7 +161,7 @@ print(fit)
 
 The package also contains a generic plot function, that can be used to plot the trends, along with 95\% intervals, of the estimated effects across each batch. This function only works for models fitted with the function **strem**.
 
-```r{}
+```R
 #Getting a plot of the estimates with confidence intervals
 plot(fit)
 
@@ -157,9 +171,9 @@ plot(fit)
 
 We can update our estimates with new batches by simply passing a model previously fitted with the **strem** function to the argument **model** and use the argument **update** = TRUE.
 
-```r{}
+```R
 #Now we can update the model with the remaining 3 batches
-fit <- strem(data[8:10], update = T, model = fit)
+fit <- strem(data_stream[8:10], update = T, model = fit)
 
 #printing the parameters
 print(fit)
@@ -169,7 +183,7 @@ print(fit)
 
 Vieira, F., Leenders, R. & Mulder, J. Fast meta-analytic approximations for relational event models: applications to data streams and multilevel data. J Comput Soc Sc 7, 1823–1859 (2024). https://doi.org/10.1007/s42001-024-00290-7
 
-```{r}
+```R
 @article{vieira2024fast,
   title={Fast meta-analytic approximations for relational event models: applications to data streams and multilevel data},
   author={Vieira, Fabio and Leenders, Roger and Mulder, Joris},
